@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Prototype B — Matchday drawer</title>
+<link rel="preload" href="https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/saira/v23/memUYa2wxmKQyNkiV50dulWP7s95AqYNzZHcVdxWI9WH-pKBrYwBlC4iY1M2xbkR.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* fonts and tokens copied verbatim from index.html */
+  @font-face{font-family:'Newsreader';font-style:normal;font-weight:400 800;font-display:swap;src:url(https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  @font-face{font-family:'Roboto';font-style:normal;font-weight:400 800;font-stretch:87.5% 100%;font-display:swap;src:url(https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  /* B only: Saira at 75% width = Saira Condensed; Google serves the bold italic only through the Saira family */
+  @font-face{font-family:'Saira';font-style:italic;font-weight:700;font-stretch:75%;font-display:swap;src:url(https://fonts.gstatic.com/s/saira/v23/memUYa2wxmKQyNkiV50dulWP7s95AqYNzZHcVdxWI9WH-pKBrYwBlC4iY1M2xbkR.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  :root{
+    --ink:#121212; --ink-2:#2b2b2b; --muted:#5c5c5c; --rule:#e6e3de; --paper:#fff; --paper-2:#f7f5f2;
+    --wb:#F26B1D; --wb-text:#B4470C;
+    --on-ink:#fff; --on-ink-2:#c9c9c9; --ink-rule:#3a3a3a; --bezel:#0b0b0b;
+    --serif:"Newsreader", Georgia, "Times New Roman", serif;
+    --sans:"Roboto", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:40px; --s6:48px; --s7:56px; --s8:64px; --s10:80px;
+    --half:4px;
+    --gutter:var(--s2);
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  html.open{overflow:hidden}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  img{display:block;max-width:100%;height:auto}
+  a{color:inherit}
+  a:focus-visible,button:focus-visible{outline:3px solid var(--wb);outline-offset:2px}
+  h1,.standfirst{text-wrap:balance}
+
+  /* ---------- masthead (index.html) + menu button ---------- */
+  .top{max-width:1120px;margin:0 auto}
+  .top-in{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);padding:var(--s2) var(--gutter);border-bottom:4px solid var(--ink)}
+  .lead{display:flex;align-items:center;gap:var(--s1);min-width:0}
+  .brand{display:flex;align-items:center;gap:var(--s1);text-decoration:none;min-width:0}
+  .brand img{width:40px;flex:none}
+  .brand b{display:block;font-family:var(--serif);font-weight:700;font-size:22px;line-height:1;letter-spacing:-.015em}
+  .brand small{display:block;margin-top:var(--half);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--wb-text);white-space:nowrap}
+  .tags{display:flex;align-items:center;gap:var(--s2);font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
+  .tags span:not(.pill){display:none}
+  .pill{background:var(--wb-text);color:var(--on-ink);padding:var(--half) var(--s1);white-space:nowrap;font-stretch:87.5%;letter-spacing:.08em}
+  .icon-btn{flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:2px;background:none;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+  .icon-btn:active{background:var(--paper-2)}
+  .menu{margin-left:calc(var(--s1) * -1)}
+  @media (max-width:400px){.tags{display:none}} /* menu button needs the room; the pill repeats the brand */
+
+  /* ---------- page behind the drawer ---------- */
+  .page{max-width:672px;margin:0 auto;padding:var(--s5) var(--gutter) var(--s8)}
+  .kick{display:flex;align-items:center;gap:var(--s1);font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;color:var(--wb-text)}
+  .kick::before{content:"";flex:none;width:var(--s3);height:4px;background:var(--wb)}
+  .page h1{font-family:var(--serif);font-weight:700;font-size:40px;line-height:1.04;letter-spacing:-.025em;margin-top:var(--s2)}
+  .page h1 em{font-style:normal;color:var(--wb-text)}
+  .standfirst{font-family:var(--serif);font-size:20px;line-height:1.35;color:var(--ink-2);margin-top:var(--s2)}
+  .note{margin-top:var(--s5);padding-top:var(--s2);border-top:1px solid var(--rule);font-size:14px;line-height:1.5;color:var(--muted)}
+
+  /* ---------- drawer: open/close is transform + opacity only ---------- */
+  .scrim{position:fixed;inset:0;z-index:10;background:rgba(18,18,18,.5);opacity:0;visibility:hidden;transition:opacity .2s var(--ease),visibility 0s linear .2s}
+  .drawer{position:fixed;top:0;bottom:0;left:0;z-index:11;width:min(88vw,400px);display:flex;flex-direction:column;background:var(--paper);box-shadow:0 0 0 1px var(--rule),8px 0 32px rgba(18,18,18,.12);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:env(safe-area-inset-bottom,0px);transform:translateX(-100%);visibility:hidden;transition:transform .2s var(--ease),visibility 0s linear .2s}
+  .open .scrim{opacity:1;visibility:visible;transition:opacity .24s var(--ease)}
+  .open .drawer{transform:none;visibility:visible;transition:transform .24s var(--ease)}
+  .drawer.dragging{transition:none}
+  @media (prefers-reduced-motion:reduce){
+    .drawer{transform:none;opacity:0;transition:opacity .15s linear,visibility 0s linear .15s}
+    .open .drawer{opacity:1;transition:opacity .15s linear}
+  }
+
+  /* ---------- B: Matchday (dark drawer, the type tag is the only accent) ---------- */
+  .drawer{background:var(--ink);color:var(--on-ink);box-shadow:8px 0 32px rgba(18,18,18,.24)}
+  .drawer .icon-btn:active{background:var(--ink-2)}
+  .dr-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);padding:var(--s2) var(--s1) var(--s2) var(--gutter);border-bottom:1px solid var(--ink-rule)}
+  .dr-head h2{font-size:14px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em}
+  .month{padding:var(--s3) var(--gutter) var(--s1);font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-2);border-bottom:1px solid var(--ink-rule)}
+  .issues{list-style:none}
+  .issues li{border-bottom:1px solid var(--ink-rule)}
+  .issue{position:relative;display:block;min-height:44px;padding:var(--s2) var(--gutter);text-decoration:none;-webkit-tap-highlight-color:transparent}
+  .issue:active{background:var(--ink-2)}
+  .issue:focus-visible{outline-offset:-3px}
+  .issue[aria-current]{background:var(--ink-2)}
+  .meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1);font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--on-ink-2)}
+  .tag{display:inline-block;padding:2px var(--s1) 1px;background:var(--wb);color:var(--ink);font-family:"Saira",var(--sans);font-style:italic;font-weight:700;font-stretch:75%;font-size:15px;line-height:1.1;letter-spacing:.02em;text-transform:uppercase}
+  .now{font-weight:700;color:var(--on-ink)}
+  .t{display:block;margin-top:var(--s1);font-size:17px;font-weight:600;line-height:1.3;color:var(--on-ink);overflow-wrap:anywhere;text-wrap:pretty}
+  .all{display:flex;align-items:center;justify-content:center;gap:var(--s1);min-height:var(--s6);margin:auto var(--gutter) var(--gutter);padding:var(--s1) var(--s2);border:1px solid var(--on-ink-2);font-size:14px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}
+  .all:active{background:var(--ink-2)}
+  .groups{padding-bottom:var(--s3)}
+  @media (hover:hover) and (pointer:fine){
+    .icon-btn:hover{background:var(--paper-2)}
+    .drawer .icon-btn:hover,.issue:hover,.all:hover{background:var(--ink-2)}
+  }
+
+  @media (min-width:521px){
+    :root{--gutter:var(--s3)}
+    .brand img{width:48px}
+    .brand b{font-size:28px}
+    .brand small{letter-spacing:.2em}
+    .page h1{font-size:56px}
+  }
+  @media (min-width:901px){
+    .top{padding:var(--s3) var(--s3) 0}
+    .top-in{padding:0 0 var(--s2)}
+    .tags span:not(.pill){display:inline}
+  }
+</style>
+</head>
+<body>
+
+<header class="top" id="top">
+  <div class="top-in">
+    <div class="lead">
+      <button class="icon-btn menu" id="menu" type="button" aria-label="Open issues menu" aria-expanded="false" aria-controls="drawer">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <a class="brand" href="../index.html">
+        <img src="../crest.png" alt="Western Ballers FC crest">
+        <span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span>
+      </a>
+    </div>
+    <div class="tags"><span class="pill">TEAM NEWS</span><span>THURSDAY SESSION</span><span>5 NOV</span></div>
+  </div>
+</header>
+
+<main class="page" id="page">
+  <div class="kick">EXCLUSIVE · THURSDAY NIGHT FOOTBALL</div>
+  <h1>Nappy Gate: <em>who left them in the goal?</em></h1>
+  <p class="standfirst">A pack of adult nappies turned up in the net at full time. The club wants answers.</p>
+  <p class="note">Prototype B — Matchday. Tap the menu at the top left. Close it with Esc, a tap on the dark area, or a swipe to the left.</p>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
+  <div class="dr-head">
+    <h2 id="drawer-title">ISSUES</h2>
+    <button class="icon-btn" id="close" type="button" aria-label="Close issues menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="groups" id="issues"></div>
+  <a class="all" href="#all-issues">All issues</a>
+</nav>
+
+<script>
+// Issues copied from content/issues-draft.json (newest first). Links to past issues are placeholders until their pages exist.
+window.ISSUES=[
+  {date:"2026-11-05",type:"Pre-match",title:"Nappy Gate: who left them in the goal?",slug:"2026-11-05"},
+  {date:"2026-10-29",type:"Pre-match",title:"No likey, no lighty",slug:"2026-10-29"},
+  {date:"2026-10-22",type:"Full-time",title:"Golden goal row, lights out, one suspension",slug:"2026-10-22"}
+];
+window.CURRENT="2026-11-05";
+var fmt=new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+var monthFmt=new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric',timeZone:'UTC'});
+window.renderIssues=function(list){
+  var box=document.getElementById('issues'),ul=null,month='';box.textContent='';
+  list.forEach(function(it){
+    var d=new Date(it.date+'T00:00:00Z'),m=monthFmt.format(d);
+    if(m!==month){month=m;box.append(el('h3','month',m));ul=el('ul','issues');box.append(ul);}
+    var li=el('li'),a=el('a','issue'),meta=el('span','meta');
+    a.href=it.slug===window.CURRENT?'../index.html':'#'+it.slug;
+    if(it.slug===window.CURRENT)a.setAttribute('aria-current','page');
+    var t=el('time',null,fmt.format(d));t.dateTime=it.date;
+    meta.append(el('span','tag',it.type),t);
+    if(it.slug===window.CURRENT)meta.append(el('span','now','Current issue'));
+    a.append(meta,el('span','t',it.title));li.append(a);ul.append(li);
+  });
+};
+renderIssues(ISSUES);
+
+(function(){
+  var root=document.documentElement,btn=document.getElementById('menu'),drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim'),closeBtn=document.getElementById('close');
+  var outside=[document.getElementById('top'),document.getElementById('page')];
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)');
+  function isOpen(){return root.classList.contains('open');}
+  function open(){root.classList.add('open');btn.setAttribute('aria-expanded','true');drawer.removeAttribute('inert');outside.forEach(function(n){n.setAttribute('inert','');});closeBtn.focus();}
+  function close(){if(!isOpen())return;root.classList.remove('open');btn.setAttribute('aria-expanded','false');drawer.setAttribute('inert','');outside.forEach(function(n){n.removeAttribute('inert');});btn.focus();}
+  window.drawerOpen=open;window.drawerClose=close;
+  btn.addEventListener('click',open);closeBtn.addEventListener('click',close);scrim.addEventListener('click',close);
+  document.addEventListener('keydown',function(e){
+    if(!isOpen())return;
+    if(e.key==='Escape'){e.preventDefault();close();return;}
+    if(e.key==='Tab'){ // focus trap (inert does most of it; this keeps Tab cycling inside)
+      var f=drawer.querySelectorAll('a[href],button'),first=f[0],last=f[f.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  });
+  // swipe left to close: the drawer follows the finger 1:1, a fling or a 30% drag closes it
+  var x0=null,y0=0,t0=0,dx=0,dragging=false,dragged=false;
+  drawer.addEventListener('pointerdown',function(e){if(e.pointerType==='mouse')return;x0=e.clientX;y0=e.clientY;t0=e.timeStamp;dx=0;dragging=false;});
+  drawer.addEventListener('pointermove',function(e){
+    if(x0===null)return;var mx=e.clientX-x0,my=e.clientY-y0;
+    if(!dragging){
+      if(Math.abs(mx)>8&&Math.abs(mx)>Math.abs(my)){dragging=true;drawer.classList.add('dragging');try{drawer.setPointerCapture(e.pointerId);}catch(_){}}
+      else if(Math.abs(my)>8){x0=null;return;}else return;
+    }
+    dx=Math.min(0,mx);
+    if(!reduce.matches){drawer.style.transform='translateX('+dx+'px)';scrim.style.opacity=String(1+dx/drawer.offsetWidth);}
+  });
+  function end(e){
+    if(x0===null)return;var was=dragging,v=Math.abs(dx)/Math.max(1,e.timeStamp-t0);
+    x0=null;dragging=false;drawer.classList.remove('dragging');drawer.style.transform='';scrim.style.opacity='';
+    if(was){dragged=true;setTimeout(function(){dragged=false;},0);if(dx<-drawer.offsetWidth*0.3||v>0.11)close();}
+  }
+  drawer.addEventListener('pointerup',end);drawer.addEventListener('pointercancel',end);
+  drawer.addEventListener('click',function(e){if(dragged){e.preventDefault();e.stopPropagation();}},true);
+})();
+</script>
+</body>
+</html>

@@ -162,8 +162,9 @@
   @media (max-width:520px){
     .cover{gap:var(--s2)}
     .phone-col{padding:var(--s1) var(--gutter) var(--s2)}
-    .screen{height:204px} /* crop the preview just below the headline's first line */
-    .ph-h{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;line-clamp:1;overflow:hidden} /* one line, so no half-line peeks above the strip */
+    .screen{height:204px} /* crop the preview just below the two-line headline */
+    .ph-k{display:none} /* repeats the masthead; frees the room for the headline's second line */
+    .ph-h{font-size:24px;margin-top:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden} /* full headline on two lines; clamp stops a third from peeking above the strip */
     .cover h1{font-size:56px}
     .cta{margin-top:var(--s2)}
     .cover-copy{display:flex;flex-direction:column}

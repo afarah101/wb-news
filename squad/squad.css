@@ -40,6 +40,7 @@
 .sq-hero-born{margin-top:var(--s1);font-size:15px;color:var(--on-ink-2)}
 .sq-tiles{display:grid;grid-template-columns:1fr 1fr;gap:var(--s1);margin-top:var(--s3)}
 .sq-tile{min-width:0;padding:var(--s2);background:var(--paper-2);border-top:4px solid var(--wb)}
+.sq-tile:nth-child(n+3){grid-column:1/-1} /* Signed for WB and Fun Fact get full rows, so a long fun fact reads as sentences, not a narrow column */
 .sq-tile dt{font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .sq-tile dd{margin-top:var(--half);font-family:var(--serif);font-weight:700;font-size:20px;line-height:1.2;overflow-wrap:anywhere}
 .sq-stat{display:flex;justify-content:space-between;gap:var(--s2);margin-top:var(--s1);padding:var(--s2);background:var(--ink);color:var(--on-ink)}
@@ -56,6 +57,8 @@
   .sq-hero{margin-left:0;margin-right:0;min-height:440px}
   .sq-hero-img{height:440px;margin-right:0}
   .sq-hero-txt{padding-left:var(--s5)}
+  .sq-tiles{grid-template-columns:repeat(3,minmax(0,1fr))} /* Position, Place of Birth, Signed for WB in one row; Fun Fact below */
+  .sq-tile:nth-child(3){grid-column:auto}
 }
 @media (min-width:960px){
   .sq-head h1{font-size:56px}

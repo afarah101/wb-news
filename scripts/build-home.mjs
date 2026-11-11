@@ -1,9 +1,9 @@
 // Builds the homepage (index.html) from issues.json: the newest issue leads, then the videos, then older issues.
-// Vercel runs this on every deploy (vercel.json). To run it yourself: node scripts/build-home.mjs [site folder]
-import { execFileSync } from 'node:child_process';
+// It also makes the link-preview images (assets/og/). Vercel runs this on every deploy (vercel.json): npm ci, then this script.
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const SITE = 'https://wb-news.vercel.app'; // link previews (WhatsApp) need full addresses
 const root = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.url)), '..'));
@@ -18,6 +18,7 @@ issues.forEach((it, i) => {
   const at = `issues.json entry ${i + 1} (${it?.slug ?? 'no slug'}): `;
   check(/^\d{4}-\d{2}-\d{2}$/.test(it.date) && !Number.isNaN(Date.parse(it.date)), at + 'date must be YYYY-MM-DD');
   check(text(it.slug) && text(it.type) && text(it.title), at + 'slug, type and title are needed');
+  check(text(it.displayTitle) && it.displayTitle.toLowerCase() === it.title.toLowerCase(), at + 'displayTitle must be the title in sentence case, same words');
   check(typeof it.standfirst === 'string', at + 'standfirst must be text ("" when the issue has none)');
   check(Array.isArray(it.stories) && it.stories.length > 0 && it.stories.every(text), at + 'stories must list at least one story');
   check(file(`issues/${it.slug}/index.html`), at + `issues/${it.slug}/index.html is missing`);
@@ -32,33 +33,22 @@ issues.forEach((it, i) => {
 });
 
 // ---------- link-preview images: a 1200x630 JPG of each cover, centred on cover.focus ([x, y] from 0 to 1, default the middle) ----------
-// ffmpeg makes them wherever it is installed (your machine). Vercel has no ffmpeg, so there the committed files are used.
+// Made on every build (Vercel included), so they are not committed.
 const OG = { w: 1200, h: 630, max: 300 * 1024 };
 const og = (it) => `assets/og/${it.date}.jpg`;
-let ffmpeg = true;
-try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); } catch { ffmpeg = false; }
-function jpegSize(buf) { // [width, height] from the JPEG frame header
-  for (let i = 2; i + 9 < buf.length && buf[i] === 0xff; i += 2 + buf.readUInt16BE(i + 2)) {
-    const m = buf[i + 1];
-    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)];
-  }
-  return [];
-}
-issues.forEach((it) => {
-  const out = join(root, og(it));
-  if (ffmpeg) {
-    const [fx, fy] = it.cover.focus ?? [0.5, 0.5];
-    mkdirSync(dirname(out), { recursive: true });
-    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', join(root, it.cover.src), '-vf',
-      `scale=${OG.w}:${OG.h}:force_original_aspect_ratio=increase:flags=lanczos,` +
-      `crop=${OG.w}:${OG.h}:clip(iw*${fx}-${OG.w / 2}\\,0\\,iw-${OG.w}):clip(ih*${fy}-${OG.h / 2}\\,0\\,ih-${OG.h})`,
-      '-frames:v', '1', '-q:v', '2', '-map_metadata', '-1', '-fflags', '+bitexact', out]);
-  }
-  check(existsSync(out), `${og(it)} is missing: run this script on a machine with ffmpeg, then commit the file`);
-  const [w, h] = jpegSize(readFileSync(out));
-  check(w === OG.w && h === OG.h, `${og(it)} must be ${OG.w}x${OG.h}, found ${w}x${h}`);
+const clamp = (n, max) => Math.min(Math.max(Math.round(n), 0), max);
+mkdirSync(join(root, 'assets/og'), { recursive: true });
+for (const it of issues) {
+  const src = join(root, it.cover.src), out = join(root, og(it));
+  const [fx, fy] = it.cover.focus ?? [0.5, 0.5];
+  const meta = await sharp(src).metadata();
+  const { width, height } = meta.autoOrient ?? meta; // autoOrient: the size after a phone photo's rotation is applied
+  const k = Math.max(OG.w / width, OG.h / height), w = Math.ceil(width * k), h = Math.ceil(height * k);
+  await sharp(src).autoOrient().resize(w, h)
+    .extract({ left: clamp(w * fx - OG.w / 2, w - OG.w), top: clamp(h * fy - OG.h / 2, h - OG.h), width: OG.w, height: OG.h })
+    .jpeg({ quality: 82 }).toFile(out);
   check(statSync(out).size <= OG.max, `${og(it)} is over 300 KB`);
-});
+}
 
 // ---------- helpers ----------
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -74,7 +64,7 @@ const lines = (a) => a.filter(Boolean).join('\n');
 const latest = issues[0];
 const videos = issues.filter((it) => it.video);
 const previous = issues.slice(1, 4);
-const name = `Western Ballers FC — ${latest.title}`;
+const name = `Western Ballers FC — ${latest.displayTitle}`;
 const image = `${SITE}/${og(latest)}`;
 const sha = process.env.VERCEL_GIT_COMMIT_SHA;
 
@@ -86,7 +76,7 @@ const html = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="scripts/build-home.mjs${sha ? ' @ ' + esc(sha.slice(0, 7)) : ''}">
 ${lines([
-  `<meta name="description" content="${esc(latest.standfirst || latest.title)}">`,
+  `<meta name="description" content="${esc(latest.standfirst || latest.displayTitle)}">`,
   '<meta property="og:site_name" content="Western Ballers FC">',
   '<meta property="og:type" content="website">',
   `<meta property="og:url" content="${SITE}/">`,
@@ -95,7 +85,7 @@ ${lines([
   `<meta property="og:image" content="${esc(image)}">`,
   `<meta property="og:image:width" content="${OG.w}">`,
   `<meta property="og:image:height" content="${OG.h}">`,
-  `<meta property="og:image:alt" content="${esc(latest.title)}">`,
+  `<meta property="og:image:alt" content="${esc(latest.displayTitle)}">`,
   '<meta name="twitter:card" content="summary_large_image">',
   `<meta name="twitter:title" content="${esc(name)}">`,
   latest.standfirst && `<meta name="twitter:description" content="${esc(latest.standfirst)}">`,
@@ -151,8 +141,8 @@ ${lines([
     <h2 id="watch">Watch</h2>
     <div class="reel">
 ${videos.map((it) => `      <figure class="clip">
-        <video controls playsinline preload="none" poster="${esc(it.video.poster)}" src="${esc(it.video.src)}" aria-label="${esc(it.title)}"></video>
-        <figcaption><b>${esc(it.title)}</b><time datetime="${esc(it.date)}">${esc(shortDate(it))}</time> · ${clock(it.video.duration)}</figcaption>
+        <video controls playsinline preload="none" poster="${esc(it.video.poster)}" src="${esc(it.video.src)}" aria-label="${esc(it.displayTitle)}"></video>
+        <figcaption><b>${esc(it.displayTitle)}</b><time datetime="${esc(it.date)}">${esc(shortDate(it))}</time> · ${clock(it.video.duration)}</figcaption>
       </figure>`).join('\n')}
     </div>
   </section>`,
@@ -162,7 +152,7 @@ ${videos.map((it) => `      <figure class="clip">
     <div class="prev">
 ${previous.map((it) => `      <a class="card" href="${story(it)}">
         <img src="${esc(it.cover.src)}" alt="" loading="lazy">
-        <span><small>${esc(it.type)} · <time datetime="${esc(it.date)}">${esc(shortDate(it))}</time></small><b>${esc(it.title)}</b></span>
+        <span><small>${esc(it.type)} · <time datetime="${esc(it.date)}">${esc(shortDate(it))}</time></small><b>${esc(it.displayTitle)}</b></span>
       </a>`).join('\n')}
     </div>
   </section>`,

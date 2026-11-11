@@ -1,4 +1,4 @@
-/* Issue menu (drawer C) and Previous / Next issue links.
+/* Issue menu (drawer C) and Previous / Next issue links. Both show displayTitle; the printed headline stays on the issue page.
    issues.json is the only list of issues: the drawer and the links are built from it.
    The page marks its own issue with <html data-issue="YYYY-MM-DD">. */
 (function () {
@@ -14,15 +14,6 @@
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function day(it) { return new Date(it.date + 'T00:00:00Z'); }
   function issueUrl(slug) { return new URL('issues/' + slug + '/', base).href; }
-  // A title printed in capitals (15 Oct) shouts in a list: the menu shows it in sentence case. The issue page keeps it as printed.
-  // shortcut: names are lowercased unless listed in NAMES; add a name when a capitals title contains one.
-  var NAMES = ['Ruislip'];
-  function menuTitle(t) {
-    if (t !== t.toUpperCase() || t === t.toLowerCase()) return t;
-    var s = t.charAt(0) + t.slice(1).toLowerCase();
-    NAMES.forEach(function (n) { s = s.replace(new RegExp('\\b' + n + '\\b', 'gi'), n); });
-    return s;
-  }
 
   // ---------- drawer markup ----------
   var scrim = el('div', 'scrim');
@@ -56,7 +47,7 @@
       tag.append(el('span', null, it.type));
       if (cur) tag.append(el('span', 'now', 'Current issue'));
       var tt = el('span', 'tt');
-      tt.append(tag, el('span', 't', menuTitle(it.title)));
+      tt.append(tag, el('span', 't', it.displayTitle));
       a.append(db, tt);
       li.append(a);
       list.append(li);
@@ -71,7 +62,7 @@
     function link(it, cls, label) {
       var a = el('a', cls);
       a.href = issueUrl(it.slug);
-      a.append(el('small', null, label), el('span', null, it.title), el('time', null, fmtLong.format(day(it))));
+      a.append(el('small', null, label), el('span', null, it.displayTitle), el('time', null, fmtLong.format(day(it))));
       box.append(a);
     }
     if (issues[i + 1]) link(issues[i + 1], 'prev', '← Previous issue');

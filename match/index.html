@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- The Match Centre: teams, live scores, the table and subs for Thursday nights.
+     Squad players come from data/players.json; match nights, results, payments and any extra players live in the
+     Match Centre database (api/match.js). match.js builds the page from both. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Western Ballers FC Match Centre: tonight's teams, live scores, the table and who still owes subs.">
+<meta property="og:site_name" content="Western Ballers FC">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wb-news.vercel.app/match/">
+<meta property="og:title" content="Match Centre — Western Ballers FC">
+<meta property="og:description" content="Tonight's teams, live scores, the table and who still owes subs.">
+<title>Match Centre — Western Ballers FC</title>
+<link rel="preload" href="https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/issue.css">
+<link rel="stylesheet" href="match.css">
+<link rel="canonical" href="https://wb-news.vercel.app/match/">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/icon-180.png">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="lead">
+      <button class="icon-btn menu" id="menu" type="button" aria-label="Open issues menu" aria-expanded="false" aria-controls="drawer">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <a class="brand" href="../">
+        <img src="../crest.png" alt="Western Ballers FC crest">
+        <span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span>
+      </a>
+    </div>
+    <div class="tags"><span class="pill">MATCH CENTRE</span><span>THURSDAY SESSIONS</span></div>
+  </div>
+</header>
+
+<main class="mc">
+  <div class="mc-head">
+    <div class="kick">MATCH CENTRE · THURSDAY NIGHT FOOTBALL</div>
+    <h1>Teams, scores and subs</h1>
+  </div>
+
+  <nav class="mc-tabs" aria-label="Match Centre sections">
+    <a href="#tonight" data-view="tonight">Match night</a>
+    <a href="#table" data-view="table">Table</a>
+    <a href="#players" data-view="players">Players</a>
+    <a href="#history" data-view="history">History</a>
+  </nav>
+
+  <div id="mc-banner"></div>
+  <section class="mc-view" id="view-tonight" aria-label="Match night"><p class="mc-msg">Warming up…</p></section>
+  <section class="mc-view" id="view-table" aria-label="Table"></section>
+  <section class="mc-view" id="view-players" aria-label="Players"></section>
+  <section class="mc-view" id="view-history" aria-label="History"></section>
+
+  <footer class="foot">
+    <div class="foot-brand"><img src="../crest.png" alt=""><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
+    <button class="mc-link" type="button" id="adminBtn">Admin sign in</button>
+  </footer>
+</main>
+
+<div class="mc-scrim" id="scrim"><div class="mc-sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="mc-toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p class="mc-msg">The Match Centre needs JavaScript to load. Even the subs know that.</p></noscript>
+<script src="../assets/menu.js"></script>
+<script src="match.js"></script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 /* Squad page only. Uses the site tokens and fonts from assets/issue.css (loaded first). */
-.sq{max-width:var(--page);margin:0 auto;padding:0 var(--gutter) var(--s6);
-  --squad-card-bg:linear-gradient(90deg,#ECEDEF 0%,#C3C6CB 100%)} /* card and profile background; the one line to change for another theme */
+.sq{max-width:var(--page);margin:0 auto;padding:0 var(--gutter) var(--s6)}
 .sq-head{padding-top:var(--s4)}
 .sq-head h1{margin-top:var(--s2);font-family:var(--serif);font-weight:700;font-size:40px;line-height:1.04;letter-spacing:-.025em}
 .sq-head .standfirst{margin-top:var(--s2);max-width:36em}
@@ -12,16 +11,17 @@
 .sq-group h2 small{font-size:12px;color:var(--wb-text)}
 .sq-grid{list-style:none;display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s2);margin-top:var(--s2)}
 
-/* ---------- card: light grey gradient, cut-out bottom-right with a soft shadow, name left, orange base line ---------- */
+/* ---------- card: charcoal gradient, cut-out bottom-right, name left, orange base line ---------- */
 .sq-card{position:relative;isolation:isolate;display:flex;align-items:flex-end;min-height:240px;overflow:hidden;padding:var(--s3) var(--s2) var(--s2);
-  background:var(--squad-card-bg);
-  border-bottom:3px solid var(--wb);color:#111;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-.sq-img{position:absolute;z-index:-2;right:4%;bottom:0;height:100%;width:auto;max-width:none;object-fit:contain;transform-origin:50% 100%;transition:transform .4s var(--ease);
-  filter:drop-shadow(8px 4px 14px rgba(0,0,0,.25))}
+  background:radial-gradient(120% 90% at 85% 100%,color-mix(in srgb,var(--wb) 16%,transparent),transparent 60%),linear-gradient(160deg,var(--ink-2) 0%,var(--ink) 55%,var(--bezel) 100%);
+  border-bottom:3px solid var(--wb);color:var(--on-ink);text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.sq-img{position:absolute;z-index:-2;right:-6%;bottom:0;height:100%;width:auto;max-width:none;transform-origin:50% 100%;transition:transform .4s var(--ease);
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 22%);mask-image:linear-gradient(to right,transparent 0,#000 22%)} /* softens shirts cut by the photo's left edge */
+.sq-card::after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;height:45%;background:linear-gradient(to top,var(--bezel) 0%,color-mix(in srgb,var(--bezel) 70%,transparent) 35%,transparent 100%);pointer-events:none}
 .sq-txt{display:flex;flex-direction:column;max-width:60%}
-.sq-name{font-weight:800;font-stretch:87.5%;font-size:32px;line-height:.95;letter-spacing:-.01em;text-transform:uppercase;overflow-wrap:anywhere}
-.sq-pos{margin-top:var(--s1);font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--wb-text)}
-.sq-born{margin-top:var(--half);font-size:14px;line-height:1.3;color:#3C3C3C}
+.sq-name{font-weight:800;font-stretch:87.5%;font-size:32px;line-height:.95;letter-spacing:-.01em;text-transform:uppercase;overflow-wrap:anywhere;text-shadow:0 2px 12px rgba(0,0,0,.45)}
+.sq-pos{margin-top:var(--s1);font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--wb)}
+.sq-born{margin-top:var(--half);font-size:14px;line-height:1.3;color:var(--on-ink-2)}
 .sq-card:focus-visible{outline:3px solid var(--wb);outline-offset:3px}
 .sq-card:active .sq-img{transform:scale(1.02)}
 
@@ -29,14 +29,15 @@
 .sq-profile{padding-top:var(--s3)}
 .sq-back{display:inline-flex;align-items:center;min-height:44px;font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--wb-text)}
 .sq-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;min-height:380px;margin:var(--s1) calc(var(--gutter) * -1) 0;overflow:hidden;
-  background:var(--squad-card-bg);
-  border-bottom:3px solid var(--wb);color:#111}
-.sq-hero-img{position:absolute;z-index:-2;right:4%;bottom:0;height:100%;width:auto;max-width:none;object-fit:contain;
-  filter:drop-shadow(8px 4px 14px rgba(0,0,0,.25))}
+  background:radial-gradient(90% 80% at 80% 100%,color-mix(in srgb,var(--wb) 20%,transparent),transparent 65%),linear-gradient(160deg,var(--ink-2) 0%,var(--ink) 55%,var(--bezel) 100%);
+  border-bottom:3px solid var(--wb);color:var(--on-ink)}
+.sq-hero::after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;height:40%;background:linear-gradient(to top,var(--bezel),transparent);pointer-events:none}
+.sq-hero-img{grid-column:2;grid-row:1;z-index:-2;justify-self:end;align-self:end;height:380px;width:auto;max-width:none;margin-right:-12%;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 18%);mask-image:linear-gradient(to right,transparent 0,#000 18%)}
 .sq-hero-txt{grid-column:1;grid-row:1;position:relative;z-index:1;padding:var(--s4) 0 var(--s3) var(--gutter);width:150%} /* the name may run over the photo */
-.sq-hero-kick{font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--wb-text)}
-.sq-hero h1{margin-top:var(--s1);font-weight:800;font-stretch:87.5%;font-size:clamp(40px,12vw,96px);line-height:.9;letter-spacing:-.015em;text-transform:uppercase;overflow-wrap:anywhere;outline:none}
-.sq-hero-born{margin-top:var(--s1);font-size:15px;color:#3C3C3C}
+.sq-hero-kick{font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--wb)}
+.sq-hero h1{margin-top:var(--s1);font-weight:800;font-stretch:87.5%;font-size:clamp(40px,12vw,96px);line-height:.9;letter-spacing:-.015em;text-transform:uppercase;overflow-wrap:anywhere;text-shadow:0 2px 16px rgba(0,0,0,.5);outline:none}
+.sq-hero-born{margin-top:var(--s1);font-size:15px;color:var(--on-ink-2)}
 .sq-tiles{display:grid;grid-template-columns:1fr 1fr;gap:var(--s1);margin-top:var(--s3)}
 .sq-tile{min-width:0;padding:var(--s2);background:var(--paper-2);border-top:4px solid var(--wb)}
 .sq-tile:nth-child(n+3){grid-column:1/-1} /* Signed for WB and Fun Fact get full rows, so a long fun fact reads as sentences, not a narrow column */
@@ -54,6 +55,7 @@
 @media (min-width:600px){
   .sq-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sq-hero{margin-left:0;margin-right:0;min-height:440px}
+  .sq-hero-img{height:440px;margin-right:0}
   .sq-hero-txt{padding-left:var(--s5)}
   .sq-tiles{grid-template-columns:repeat(3,minmax(0,1fr))} /* Position, Place of Birth, Signed for WB in one row; Fun Fact below */
   .sq-tile:nth-child(3){grid-column:auto}
@@ -63,6 +65,7 @@
   .sq-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3)}
   .sq-card{min-height:300px}
   .sq-hero{min-height:520px}
+  .sq-hero-img{height:520px}
   .sq-tiles{gap:var(--s2)}
 }
 @media (prefers-reduced-motion:reduce){

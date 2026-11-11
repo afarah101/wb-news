@@ -14,6 +14,7 @@
     --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:40px; --s6:48px; --s7:56px; --s8:64px; --s10:80px;
     --half:4px; /* half-step, chips only */
     --gutter:var(--s2);
+    --page:1200px; /* one centred container: masthead, cover and homepage share it */
     --ease:cubic-bezier(.16,1,.3,1);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -27,7 +28,7 @@
   .n{color:var(--wb-text);font-weight:600}
 
   /* ---------- masthead ---------- */
-  .top{max-width:1120px;margin:0 auto}
+  .top{max-width:var(--page);margin:0 auto}
   .top-in{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);padding:var(--s2) var(--gutter);border-bottom:4px solid var(--ink)}
   .brand{display:flex;align-items:center;gap:var(--s1);text-decoration:none}
   .brand img{width:40px}
@@ -38,7 +39,7 @@
   .pill{background:var(--wb-text);color:var(--on-ink);padding:var(--half) var(--s1);white-space:nowrap;font-stretch:87.5%;letter-spacing:.08em}
 
   /* ---------- page 1: cover ---------- */
-  .cover{max-width:1120px;display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s5);margin:0 auto;padding:0 var(--gutter) var(--s6)}
+  .cover{max-width:var(--page);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s5);margin:0 auto;padding:0 var(--gutter) var(--s6)}
   .phone-col{display:block;margin:0 calc(var(--gutter) * -1);padding:var(--s4) var(--gutter) var(--s5);background:var(--paper-2);overflow:hidden;text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent}
   .phone{--r:40px;width:min(100%,304px);margin:0 auto;border-radius:var(--r);background:var(--bezel);padding:var(--s1);box-shadow:inset 0 0 0 1px var(--ink-2),0 8px 16px rgba(18,18,18,.04),0 40px 80px rgba(18,18,18,.05);transition:transform .15s var(--ease)}
   .screen{border-radius:calc(var(--r) - var(--s1));overflow:hidden;background:var(--paper);position:relative;height:560px}
@@ -257,7 +258,7 @@
   .top + .art{border-top:0}
 
   /* ---------- one photo grade for every issue photo: slight contrast + warmth ---------- */
-  .art figure img,.ph-img{filter:contrast(1.06) saturate(1.04) sepia(.08)}
+  .art figure img,.ph-img,.home-photo img,.card img{filter:contrast(1.06) saturate(1.04) sepia(.08)}
   .art figure:not(.hero) img{max-height:75vh;width:auto}
 
   /* ---------- stand-outs (existing text only: score line, rating cards, pull quote) ---------- */
@@ -292,4 +293,48 @@
   @media (prefers-reduced-motion:reduce){
     .drawer{transform:none;opacity:0;transition:opacity .15s linear,visibility 0s linear .15s}
     .open .drawer{opacity:1;transition:opacity .15s linear}
+  }
+
+  /* ==================== added for the auto-built homepage (scripts/build-home.mjs) and the videos ==================== */
+
+  /* ---------- homepage: same centred container as the masthead; one column on phones, 5/7 on desktop ---------- */
+  .home{max-width:var(--page);margin:0 auto;padding:0 var(--gutter) var(--s6)}
+  .home-lead{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s3);align-items:start}
+  .home-photo{display:block;margin:0 calc(var(--gutter) * -1);-webkit-tap-highlight-color:transparent} /* full-bleed under the masthead rule on phones */
+  .home-photo img{width:100%;aspect-ratio:3/2;object-fit:cover} /* short on phones so the headline stays on the first screen */
+  .home-photo:active{opacity:.85}
+  .home h1{font-family:var(--serif);font-weight:700;font-size:40px;line-height:1.04;letter-spacing:-.025em;margin-top:var(--s2);overflow-wrap:anywhere}
+  .home-row{margin-top:var(--s7)}
+  .home-row h2{padding-top:var(--s2);border-top:4px solid var(--ink);font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase}
+  .home .foot{width:auto;margin-top:var(--s7);padding:var(--s3) 0 0}
+
+  /* ---------- video: native player; .reel is the homepage Watch row (sideways swipe with snap) ---------- */
+  .clip{width:min(100%,360px)}
+  .clip video{display:block;width:100%;aspect-ratio:9/16;object-fit:contain;background:var(--ink)}
+  .clip figcaption b{display:block;font-family:var(--serif);font-size:17px;line-height:1.25;letter-spacing:-.005em;margin-bottom:var(--half);overflow-wrap:anywhere}
+  .reel{display:flex;gap:var(--s2);margin:var(--s2) calc(var(--gutter) * -1) 0;padding:0 var(--gutter) var(--s1);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding-left:var(--gutter)}
+  .reel .clip{flex:none;width:min(72vw,280px);margin:0;scroll-snap-align:start} /* 72vw: the next video peeks in, so the row reads as swipeable */
+
+  /* ---------- previous issues: thumbnail rows on phones, three cards from tablet up ---------- */
+  .prev{display:grid;gap:var(--s2);margin-top:var(--s2)}
+  .card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:var(--s2);align-items:start;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .card:active{background:var(--paper-2)}
+  .card img{width:100%;aspect-ratio:1;object-fit:cover}
+  .card small{display:block;font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.1em;line-height:1.4;text-transform:uppercase;color:var(--wb-text)}
+  .card b{display:block;margin-top:var(--half);font-family:var(--serif);font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}
+
+  @media (hover:hover) and (pointer:fine){
+    .card:hover{background:var(--paper-2)}
+  }
+  @media (min-width:701px){
+    .prev{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3)}
+    .card{grid-template-columns:minmax(0,1fr);gap:var(--s1);align-content:start}
+    .card img{aspect-ratio:3/2}
+  }
+  @media (min-width:901px){
+    .home-lead{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:var(--s6);padding-top:var(--s4)}
+    .home-photo{margin:0}
+    .home-photo img{aspect-ratio:4/5}
+    .home h1{font-size:clamp(44px,4.6vw,56px)}
+    .home-copy .cta{display:inline-flex;padding:0 var(--s5)}
   }

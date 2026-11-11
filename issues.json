@@ -12,7 +12,10 @@
       "Superstar Dualeh: bounce back or nappies on standby?",
       "Westway: real calf injury or preloaded excuse?",
       "Sudz returns. Security on the switch."
-    ]
+    ],
+    "cover": {
+      "src": "nappy.jpg"
+    }
   },
   {
     "date": "2026-10-29",
@@ -26,7 +29,10 @@
       "Committee looking for a new pitch to play at?",
       "Ahmed PB flu game",
       "Penalties and back passes"
-    ]
+    ],
+    "cover": {
+      "src": "assets/img/2026-10-29/exhibit-a.webp"
+    }
   },
   {
     "date": "2026-10-22",
@@ -40,7 +46,15 @@
       "Debuts to remember",
       "Lights out",
       "Line-ups"
-    ]
+    ],
+    "cover": {
+      "src": "assets/img/2026-10-22/under-the-lights.webp"
+    },
+    "video": {
+      "src": "assets/video/2026-10-22.mp4",
+      "poster": "assets/video/2026-10-22.webp",
+      "duration": 61
+    }
   },
   {
     "date": "2026-10-15",
@@ -55,6 +69,14 @@
       "DEBUTS AND A RETURN",
       "SUDZ SETS A DEADLINE",
       "CHAIRMAN IN THE STANDS"
-    ]
+    ],
+    "cover": {
+      "src": "assets/img/2026-10-15/odemwingie.webp"
+    },
+    "video": {
+      "src": "assets/video/2026-10-15.mp4",
+      "poster": "assets/video/2026-10-15.webp",
+      "duration": 55
+    }
   }
 ]

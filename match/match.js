@@ -459,7 +459,8 @@
       '<div class="row"><button type="submit" class="btn primary">Sign in</button><button type="button" class="btn" data-action="close">Cancel</button></div></form>', 'Admin sign in');
   }
 
-  /* Who scored and who assisted. S.goal = { wid, gi, idx (index in game.goals, -1 = a goal still to credit), s, all, fresh } */
+  /* Who scored and who assisted. Nothing is saved until both are picked (an own goal needs no assist).
+     S.goal = { wid, gi, idx (index in game.goals, -1 = an older goal still to credit), s, all, fresh (a new goal), by (scorer picked so far) } */
   function goalSheet(step) {
     var G = S.goal, w = G && S.weeks.find(function (x) { return x.id === G.wid; }), g = w && games(w)[G.gi];
     if (!g) { closeSheet(); return; }
@@ -468,34 +469,39 @@
     var t = teamOf(w, G.s), squad = w.squad || {};
     var mates = Object.keys(squad).filter(function (pid) { return squad[pid] === G.s && S.players.has(pid); }).map(function (pid) { return S.players.get(pid); });
     var list = (G.all || !mates.length ? Array.from(S.players.values()) : mates).sort(byName);
-    if (step === 'as') list = list.filter(function (p) { return p.id !== x.by; });
-    var cur = step === 'as' ? x.as : x.by;
+    if (step === 'as') list = list.filter(function (p) { return p.id !== G.by; });
+    var sameScorer = G.idx >= 0 && x.by === G.by;
+    var cur = step === 'as' ? (sameScorer ? x.as : null) : G.by;
     function pick(p) {
       return '<li><button class="pick" data-action="goal-' + step + '" data-v="' + esc(p.id) + '" aria-pressed="' + (cur === p.id) + '">' + avatar(p, 'av36') + '<span class="nm">' + esc(pName(p)) + '</span></button></li>';
     }
     var more = mates.length ? '<button class="mc-link" data-action="goal-all" data-step="' + step + '">' + (G.all ? 'Only show ' + esc(t.name) : 'Not listed? Show every player') + '</button>' : '';
     var html = step === 'as'
-      ? '<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + ' · ' + esc(scorerName(x.by)) + '</div><h2 style="margin-top:6px">Who set it up?</h2></div>' +
-        '<ul class="picks">' + list.map(pick).join('') + '<li><button class="pick" data-action="goal-as" data-v="" aria-pressed="' + (!x.as && G.idx >= 0 && !G.fresh) + '"><span class="nm">No assist</span><span class="muted" style="font-size:13px">Solo goal, penalty, rebound</span></button></li></ul>' +
+      ? '<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + ' · ' + esc(scorerName(G.by)) + '</div><h2 style="margin-top:6px">Who set it up?</h2></div>' +
+        '<ul class="picks">' + list.map(pick).join('') + '<li><button class="pick" data-action="goal-as" data-v="" aria-pressed="' + (sameScorer && !x.as) + '"><span class="nm">No assist</span><span class="muted" style="font-size:13px">Solo goal, penalty, rebound</span></button></li></ul>' +
         '<div class="row">' + more + '<span class="spacer"></span><button class="btn" data-action="goal-step" data-step="by">Back</button></div>'
       : '<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + '</div><h2 style="margin-top:6px">Who scored?</h2></div>' +
-        '<ul class="picks">' + list.map(pick).join('') + '<li><button class="pick" data-action="goal-by" data-v="og" aria-pressed="' + (x.by === 'og') + '"><span class="nm">Own goal</span><span class="muted" style="font-size:13px">Put in by the other team</span></button></li></ul>' +
+        '<ul class="picks">' + list.map(pick).join('') + '<li><button class="pick" data-action="goal-by" data-v="og" aria-pressed="' + (G.by === 'og') + '"><span class="nm">Own goal</span><span class="muted" style="font-size:13px">Put in by the other team</span></button></li></ul>' +
         '<div class="row">' + more + '<span class="spacer"></span>' +
-        (G.fresh ? '<button class="btn" data-action="goal-later">Add later</button>' : '<button class="btn danger" data-action="delete-goal">Delete goal</button><button class="btn" data-action="close">Cancel</button>') + '</div>';
+        (G.fresh ? '' : '<button class="btn danger" data-action="delete-goal">Delete goal</button>') + '<button class="btn" data-action="close">Cancel</button></div>' +
+        (G.fresh ? '<p class="muted" style="font-size:14px">The goal goes on the scoreboard once you\'ve picked the scorer and the assist.</p>' : '');
     openSheet(html, step === 'as' ? 'Who set it up?' : 'Who scored?');
   }
-  function saveGoal(fn) {
-    var G = S.goal;
+  function commitGoal(by, as) { // returns false if the game has gone
+    var G = S.goal, ok = false;
     mutateWeek(G.wid, function (x) {
       var g = x.games && x.games[G.gi]; if (!g) return;
       g.goals = Array.isArray(g.goals) ? g.goals : [];
-      var e = G.idx >= 0 ? g.goals[G.idx] : null;
-      if (G.idx < 0) { e = { s: G.s, by: '', as: '' }; g.goals.push(e); G.idx = g.goals.length - 1; }
-      if (!e || e.s !== G.s) return;
-      fn(e);
-      var k = G.s === 'A' ? 'a' : 'b';
-      g[k] = Math.max(+g[k] || 0, g.goals.filter(function (y) { return y.s === G.s; }).length);
+      var k = G.s === 'A' ? 'a' : 'b', n = +g[k] || 0, e;
+      if (G.idx >= 0) { e = g.goals[G.idx]; if (!e || e.s !== G.s) return; }
+      else { if (G.fresh && n >= 99) return; e = { s: G.s }; if (G.fresh) g.goals.push(e); else g.goals.unshift(e); } // an older goal goes before the newer ones, so − still takes off the latest
+      e.by = by; e.as = by === 'og' ? '' : as;
+      var cnt = g.goals.filter(function (y) { return y.s === G.s; }).length;
+      g[k] = G.fresh ? Math.max(n + 1, cnt) : Math.max(n, cnt);
+      if (G.fresh && (!g.status || g.status === 'upcoming')) g.status = 'live';
+      ok = true;
     });
+    return ok;
   }
   function statsText(w) {
     var A = teamOf(w, 'A'), B = teamOf(w, 'B'), gs = games(w), lines = ['Western Ballers FC · ' + fmtDate(w.id, true)];
@@ -571,40 +577,35 @@
       }
       case 'pick-game': S.gameIdx = +t.dataset.i; render(); break;
       case 'score': if (w) {
-        // + adds a goal and asks who scored and assisted; − takes off that team's most recent goal.
-        var gi = gameIndex(w), sd = t.dataset.side, d = +t.dataset.d, newIdx = -1, removed = null;
+        // + asks who scored and who assisted, and only then adds the goal; − takes off that team's most recent goal.
+        var gi = gameIndex(w), sd = t.dataset.side, removed = null;
+        if (+t.dataset.d > 0) { S.goal = { wid: w.id, gi: gi, idx: -1, s: sd, all: false, fresh: true, by: '' }; goalSheet('by'); break; }
         mutateWeek(w.id, function (x) {
-          var g = x.games[gi]; if (!g) return; var k = sd === 'A' ? 'a' : 'b';
+          var g = x.games[gi]; if (!g) return; var k = sd === 'A' ? 'a' : 'b', n = +g[k] || 0;
+          if (!n) return;
           g.goals = Array.isArray(g.goals) ? g.goals : [];
-          var cnt = g.goals.filter(function (y) { return y.s === sd; }).length, n = +g[k] || 0;
-          if (d > 0) {
-            if (n >= 99) return;
-            g.goals.push({ s: sd, by: '', as: '' }); newIdx = g.goals.length - 1; g[k] = Math.max(n + 1, cnt + 1);
-          } else {
-            if (!n) return;
-            if (cnt) for (var j = g.goals.length - 1; j >= 0; j--) if (g.goals[j].s === sd) { removed = g.goals.splice(j, 1)[0]; break; }
-            g[k] = n - 1;
-          }
-          if (!g.status || g.status === 'upcoming') g.status = 'live';
+          for (var j = g.goals.length - 1; j >= 0; j--) if (g.goals[j].s === sd) { removed = g.goals.splice(j, 1)[0]; break; }
+          g[k] = n - 1;
         });
-        if (newIdx >= 0) { S.goal = { wid: w.id, gi: gi, idx: newIdx, s: sd, all: false, fresh: true }; goalSheet('by'); }
-        else if (removed && removed.by) toast('Took off ' + (removed.by === 'og' ? 'the own goal' : scorerName(removed.by) + '\'s goal'));
+        if (removed && removed.by) toast('Took off ' + (removed.by === 'og' ? 'the own goal' : scorerName(removed.by) + '\'s goal'));
       } break;
-      case 'edit-goal': if (w) { S.goal = { wid: w.id, gi: gameIndex(w), idx: +t.dataset.i, s: t.dataset.side, all: false, fresh: false }; goalSheet('by'); } break;
+      case 'edit-goal': if (w) {
+        var egi = gameIndex(w), ei = +t.dataset.i, eg = (games(w)[egi] || {}).goals || [];
+        S.goal = { wid: w.id, gi: egi, idx: ei, s: t.dataset.side, all: false, fresh: false, by: ei >= 0 && eg[ei] ? eg[ei].by || '' : '' };
+        goalSheet('by');
+      } break;
       case 'goal-step': goalSheet(t.dataset.step); break;
       case 'goal-all': S.goal.all = !S.goal.all; goalSheet(t.dataset.step); break;
-      case 'goal-later': closeSheet(); toast('Goal added. Tap it on the scoreboard to add the scorer.'); break;
-      case 'goal-by': {
-        var by = t.dataset.v;
-        saveGoal(function (e) { e.by = by; if (by === 'og' || e.as === by) e.as = ''; });
-        if (by === 'og') { closeSheet(); toast('Own goal recorded'); } else goalSheet('as');
+      case 'goal-by':
+        S.goal.by = t.dataset.v;
+        if (S.goal.by !== 'og') { goalSheet('as'); break; }
+        closeSheet(); toast(commitGoal('og', '') ? 'Own goal added' : 'That game has changed. Try again.');
         break;
-      }
       case 'goal-as': {
-        var as = t.dataset.v;
-        var scorer = '';
-        saveGoal(function (e) { e.as = as; scorer = e.by; });
-        closeSheet(); toast('Goal saved: ' + (scorer ? scorerName(scorer) : 'no scorer yet') + (as ? ', assist ' + scorerName(as) : ''));
+        var sc = S.goal.by, as = t.dataset.v;
+        if (!sc) { goalSheet('by'); break; }
+        closeSheet();
+        toast(commitGoal(sc, as) ? 'Goal: ' + scorerName(sc) + (as ? ', assist ' + scorerName(as) : ', no assist') : 'That game has changed. Try again.');
         break;
       }
       case 'delete-goal': armOrRun(t, function () {

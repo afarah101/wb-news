@@ -20,8 +20,7 @@ Until this is done the page says *Not connected yet*.
 1. Open `/match/`, tap **Admin sign in**, enter the PIN.
 2. **Set up** the night: date, cost per player, team names and colours (Bibs and Shirts by default).
 3. **Pick teams:** put each player in a team or leave them Out.
-4. **Kick off**. For each goal tap **+**, then pick **who scored** (or *Own goal*) and **who set it up** (or *No assist*). Tap **Full time** at the end. Add another game if you play more than one.
-   - In a rush? Tap **Add later**. The goal counts straight away and shows *Add scorer* on the scoreboard until you tap it and fill it in.
+4. **Kick off**. For each goal tap **+**, pick **who scored** (or *Own goal*), then **who set it up** (or *No assist*). The goal only goes on the scoreboard once both are picked, so every goal has its scorer and assist. Tap **Full time** at the end. Add another game if you play more than one.
    - Tap any goal on the scoreboard to change the scorer or assist, or to delete it. **−** takes off that team's most recent goal.
 5. Tap a player's **Owes £…** chip once they've paid.
 6. **Copy stats** (next to the date) copies the night's results, scorers and assists as plain text, ready to paste into the group chat or the week's news issue.

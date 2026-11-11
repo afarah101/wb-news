@@ -30,7 +30,7 @@
       "birthplace": "Southall, West London",
       "photo": "assets/squad/ahmed-pb.png",
       "signedFor": "",
-      "funFact": "",
+      "funFact": "Known as Baked Beans: does exactly what it says on the tin. Nothing more, nothing less. Shows up, delivers, keeps it moving. No wasted movements.",
       "fakeStat": null
     },
     {
@@ -38,7 +38,7 @@
       "name": "Westway",
       "group": "Defenders",
       "position": "RB",
-      "birthplace": "Westway Sports Centre, London",
+      "birthplace": "Pitch 5, Westway Sports Centre",
       "photo": "assets/squad/westway.png",
       "signedFor": "",
       "funFact": "",
@@ -73,6 +73,39 @@
       "position": "LB",
       "birthplace": "Grove, West London",
       "photo": "assets/squad/sudz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "skinny",
+      "name": "Skinny",
+      "group": "Defenders",
+      "position": "RB",
+      "birthplace": "Hanwell, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "Never met a challenge he didn't love. If he isn't kicking it into Row Z, he's slide-tackling someone.",
+      "fakeStat": null
+    },
+    {
+      "id": "yusuf-tt",
+      "name": "Yusuf TT",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "White City, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "adam-o",
+      "name": "Adam O",
+      "group": "Defenders",
+      "position": "CB",
+      "birthplace": "White City, West London",
+      "photo": "",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -144,12 +177,45 @@
       "fakeStat": null
     },
     {
+      "id": "dualeh",
+      "name": "Dualeh",
+      "group": "Midfielders",
+      "position": "CAM",
+      "birthplace": "Just The Behind Striker, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "yusuf-isco",
+      "name": "Yusuf Isco",
+      "group": "Midfielders",
+      "position": "LW",
+      "birthplace": "White City, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
       "id": "hamze-k",
       "name": "Hamze K",
       "group": "Forwards",
       "position": "ST",
       "birthplace": "West London",
       "photo": "assets/squad/hamze-k.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ali-awil",
+      "name": "Ali Awil",
+      "group": "Forwards",
+      "position": "ST",
+      "birthplace": "Grove, West London",
+      "photo": "",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null

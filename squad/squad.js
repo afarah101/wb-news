@@ -11,9 +11,10 @@
   var GROUPS = ['Goalkeepers', 'Defenders', 'Midfielders', 'Forwards']; // page order; empty groups are hidden
   var POSITIONS = {
     GK: 'Goalkeeper', CB: 'Centre-Back', LB: 'Left-Back', RB: 'Right-Back',
-    CDM: 'Defensive Midfielder', CM: 'Central Midfielder', LW: 'Left Winger', RW: 'Right Winger', ST: 'Striker'
+    CDM: 'Defensive Midfielder', CM: 'Central Midfielder', CAM: 'Attacking Midfielder', LW: 'Left Winger', RW: 'Right Winger', ST: 'Striker'
   };
   var DASH = '—';
+  var PLACEHOLDER = 'assets/squad/placeholder.svg'; // shown when a player has no photo, or the photo fails to load
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -25,7 +26,8 @@
   function positionName(code) { return POSITIONS[code] || shown(code); }
   function photo(p, cls, alt, eager) {
     var img = el('img', cls);
-    img.src = new URL(p.photo, root).href;
+    img.addEventListener('error', function () { img.src = new URL(PLACEHOLDER, root).href; }, { once: true });
+    img.src = new URL(shown(p.photo) === DASH ? PLACEHOLDER : p.photo, root).href;
     img.alt = alt;
     img.width = 600;
     img.height = 750;

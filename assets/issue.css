@@ -152,7 +152,7 @@
     .ph-h{font-size:24px;margin-top:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden} /* full headline on two lines; clamp stops a third from peeking above the strip */
     .cover h1{font-size:56px}
     .cta{margin-top:var(--s2)}
-    .cover-copy{display:flex;flex-direction:column}
+    .cover-copy,.home-copy{display:flex;flex-direction:column}
     .meta,.heads{order:1} /* button straight after the intro, story list below it */
   }
 

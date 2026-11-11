@@ -14,7 +14,8 @@
       "Sudz returns. Security on the switch."
     ],
     "cover": {
-      "src": "nappy.jpg"
+      "src": "nappy.jpg",
+      "focus": [0.5, 0.48]
     }
   },
   {
@@ -31,7 +32,8 @@
       "Penalties and back passes"
     ],
     "cover": {
-      "src": "assets/img/2026-10-29/exhibit-a.webp"
+      "src": "assets/img/2026-10-29/exhibit-b.webp",
+      "focus": [0.5, 0.4]
     }
   },
   {
@@ -71,7 +73,8 @@
       "CHAIRMAN IN THE STANDS"
     ],
     "cover": {
-      "src": "assets/img/2026-10-15/odemwingie.webp"
+      "src": "assets/img/2026-10-15/odemwingie.webp",
+      "focus": [0.5, 0.45]
     },
     "video": {
       "src": "assets/video/2026-10-15.mp4",

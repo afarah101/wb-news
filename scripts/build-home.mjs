@@ -1,6 +1,7 @@
 // Builds the homepage (index.html) from issues.json: the newest issue leads, then the videos, then older issues.
 // Vercel runs this on every deploy (vercel.json). To run it yourself: node scripts/build-home.mjs [site folder]
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,11 +22,42 @@ issues.forEach((it, i) => {
   check(Array.isArray(it.stories) && it.stories.length > 0 && it.stories.every(text), at + 'stories must list at least one story');
   check(file(`issues/${it.slug}/index.html`), at + `issues/${it.slug}/index.html is missing`);
   check(file(it.cover?.src), at + 'cover.src must point at an image in this repo');
+  const f = it.cover.focus;
+  check(f === undefined || (Array.isArray(f) && f.length === 2 && f.every((n) => Number.isFinite(n) && n >= 0 && n <= 1)), at + 'cover.focus must be [x, y], each from 0 to 1');
   if (it.video) {
     check(file(it.video.src) && file(it.video.poster), at + 'video.src and video.poster must point at files in this repo');
     check(Number.isFinite(it.video.duration) && it.video.duration > 0, at + 'video.duration must be the length in seconds');
   }
   check(i === 0 || it.date < issues[i - 1].date, at + 'issues must be listed newest first'); // the menu reads the same order
+});
+
+// ---------- link-preview images: a 1200x630 JPG of each cover, centred on cover.focus ([x, y] from 0 to 1, default the middle) ----------
+// ffmpeg makes them wherever it is installed (your machine). Vercel has no ffmpeg, so there the committed files are used.
+const OG = { w: 1200, h: 630, max: 300 * 1024 };
+const og = (it) => `assets/og/${it.date}.jpg`;
+let ffmpeg = true;
+try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); } catch { ffmpeg = false; }
+function jpegSize(buf) { // [width, height] from the JPEG frame header
+  for (let i = 2; i + 9 < buf.length && buf[i] === 0xff; i += 2 + buf.readUInt16BE(i + 2)) {
+    const m = buf[i + 1];
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)];
+  }
+  return [];
+}
+issues.forEach((it) => {
+  const out = join(root, og(it));
+  if (ffmpeg) {
+    const [fx, fy] = it.cover.focus ?? [0.5, 0.5];
+    mkdirSync(dirname(out), { recursive: true });
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', join(root, it.cover.src), '-vf',
+      `scale=${OG.w}:${OG.h}:force_original_aspect_ratio=increase:flags=lanczos,` +
+      `crop=${OG.w}:${OG.h}:clip(iw*${fx}-${OG.w / 2}\\,0\\,iw-${OG.w}):clip(ih*${fy}-${OG.h / 2}\\,0\\,ih-${OG.h})`,
+      '-frames:v', '1', '-q:v', '2', '-map_metadata', '-1', '-fflags', '+bitexact', out]);
+  }
+  check(existsSync(out), `${og(it)} is missing: run this script on a machine with ffmpeg, then commit the file`);
+  const [w, h] = jpegSize(readFileSync(out));
+  check(w === OG.w && h === OG.h, `${og(it)} must be ${OG.w}x${OG.h}, found ${w}x${h}`);
+  check(statSync(out).size <= OG.max, `${og(it)} is over 300 KB`);
 });
 
 // ---------- helpers ----------
@@ -43,7 +75,7 @@ const latest = issues[0];
 const videos = issues.filter((it) => it.video);
 const previous = issues.slice(1, 4);
 const name = `Western Ballers FC — ${latest.title}`;
-const image = new URL(latest.cover.src, SITE + '/').href;
+const image = `${SITE}/${og(latest)}`;
 const sha = process.env.VERCEL_GIT_COMMIT_SHA;
 
 const html = `<!DOCTYPE html>
@@ -61,6 +93,8 @@ ${lines([
   `<meta property="og:title" content="${esc(name)}">`,
   latest.standfirst && `<meta property="og:description" content="${esc(latest.standfirst)}">`,
   `<meta property="og:image" content="${esc(image)}">`,
+  `<meta property="og:image:width" content="${OG.w}">`,
+  `<meta property="og:image:height" content="${OG.h}">`,
   `<meta property="og:image:alt" content="${esc(latest.title)}">`,
   '<meta name="twitter:card" content="summary_large_image">',
   `<meta name="twitter:title" content="${esc(name)}">`,
@@ -72,6 +106,9 @@ ${lines([
 <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/issue.css">
 <link rel="canonical" href="${SITE}/">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
 </head>
 <body>
 

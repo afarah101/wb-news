@@ -1,0 +1,89 @@
+[
+  {
+    "date": "2026-11-05",
+    "type": "Pre-match",
+    "title": "Nappy Gate: who left them in the goal?",
+    "displayTitle": "Nappy Gate: who left them in the goal?",
+    "slug": "2026-11-05",
+    "standfirst": "A pack of adult nappies turned up in the net at full time. The club wants answers.",
+    "stories": [
+      "Nappy Gate: who left them in the goal?",
+      "Mohammed Skinny: injured or running scared?",
+      "Bibs blame ref instead of looking in the mirror?",
+      "Superstar Dualeh: bounce back or nappies on standby?",
+      "Westway: real calf injury or preloaded excuse?",
+      "Sudz returns. Security on the switch."
+    ],
+    "cover": {
+      "src": "nappy.jpg",
+      "focus": [0.5, 0.48]
+    }
+  },
+  {
+    "date": "2026-10-29",
+    "type": "Pre-match",
+    "title": "No likey, no lighty",
+    "displayTitle": "No likey, no lighty",
+    "slug": "2026-10-29",
+    "standfirst": "",
+    "stories": [
+      "No likey, no lighty",
+      "Hanad Grove new position?",
+      "Committee looking for a new pitch to play at?",
+      "Ahmed PB flu game",
+      "Penalties and back passes"
+    ],
+    "cover": {
+      "src": "assets/img/2026-10-29/exhibit-b.webp",
+      "focus": [0.5, 0.4]
+    }
+  },
+  {
+    "date": "2026-10-22",
+    "type": "Full-time",
+    "title": "Golden goal row, lights out, one suspension",
+    "displayTitle": "Golden goal row, lights out, one suspension",
+    "slug": "2026-10-22",
+    "standfirst": "Ali Awil and Mo Bouch light up their debuts as the sides share six games, 3–3. Then Sudz turns the lights off. The fallout has split the club.",
+    "stories": [
+      "Golden goal row, lights out, one suspension",
+      "A six-game classic",
+      "Debuts to remember",
+      "Lights out",
+      "Line-ups"
+    ],
+    "cover": {
+      "src": "assets/img/2026-10-22/under-the-lights.webp"
+    },
+    "video": {
+      "src": "assets/video/2026-10-22.mp4",
+      "poster": "assets/video/2026-10-22.webp",
+      "duration": 61
+    }
+  },
+  {
+    "date": "2026-10-15",
+    "type": "Pre-match",
+    "title": "INJURY CRISIS DEEPENS AS SIX MISS TONIGHT'S SESSION, BUT RUISLIP RETURNS",
+    "displayTitle": "Injury crisis deepens as six miss tonight's session, but Ruislip returns",
+    "slug": "2026-10-15",
+    "standfirst": "Three players make their debut, including neighbourhood baller Saeed Messi, while Chairman Sheikh Ahmed Milky is expected in the stands.",
+    "stories": [
+      "INJURY CRISIS DEEPENS AS SIX MISS TONIGHT'S SESSION, BUT RUISLIP RETURNS",
+      "PAPERWORK BLOW FOR ALI AWIL",
+      "FA IN ATTENDANCE AFTER FORMAL COMPLAINT",
+      "DEBUTS AND A RETURN",
+      "SUDZ SETS A DEADLINE",
+      "CHAIRMAN IN THE STANDS"
+    ],
+    "cover": {
+      "src": "assets/img/2026-10-15/odemwingie.webp",
+      "focus": [0.5, 0.45]
+    },
+    "video": {
+      "src": "assets/video/2026-10-15.mp4",
+      "poster": "assets/video/2026-10-15.webp",
+      "duration": 55
+    }
+  }
+]

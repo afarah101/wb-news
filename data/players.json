@@ -6,7 +6,7 @@
       "group": "Defenders",
       "position": "CB",
       "birthplace": "Southall, West London",
-      "photo": "public/squad/shamz.png",
+      "photo": "assets/squad/shamz.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -17,7 +17,7 @@
       "group": "Defenders",
       "position": "CB",
       "birthplace": "Grove, West London",
-      "photo": "public/squad/mo-bouch.png",
+      "photo": "assets/squad/mo-bouch.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -28,7 +28,7 @@
       "group": "Defenders",
       "position": "LB",
       "birthplace": "Southall, West London",
-      "photo": "public/squad/ahmed-pb.png",
+      "photo": "assets/squad/ahmed-pb.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -39,7 +39,7 @@
       "group": "Defenders",
       "position": "RB",
       "birthplace": "Westway Sports Centre, London",
-      "photo": "public/squad/westway.png",
+      "photo": "assets/squad/westway.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -50,7 +50,7 @@
       "group": "Defenders",
       "position": "RB",
       "birthplace": "Fulham, West London",
-      "photo": "public/squad/ruislip.png",
+      "photo": "assets/squad/ruislip.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -61,7 +61,7 @@
       "group": "Defenders",
       "position": "LB",
       "birthplace": "Westfield, West London",
-      "photo": "public/squad/ragz.png",
+      "photo": "assets/squad/ragz.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -72,7 +72,7 @@
       "group": "Defenders",
       "position": "LB",
       "birthplace": "Grove, West London",
-      "photo": "public/squad/sudz.png",
+      "photo": "assets/squad/sudz.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -83,7 +83,7 @@
       "group": "Midfielders",
       "position": "CM",
       "birthplace": "Southall, West London",
-      "photo": "public/squad/af.png",
+      "photo": "assets/squad/af.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -94,7 +94,7 @@
       "group": "Midfielders",
       "position": "CDM",
       "birthplace": "In between Hayes & Grove, West London",
-      "photo": "public/squad/hanad-grove.png",
+      "photo": "assets/squad/hanad-grove.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -105,7 +105,7 @@
       "group": "Midfielders",
       "position": "CM",
       "birthplace": "Southall, West London",
-      "photo": "public/squad/hanad-southall.png",
+      "photo": "assets/squad/hanad-southall.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -116,7 +116,7 @@
       "group": "Midfielders",
       "position": "LW",
       "birthplace": "Southall, West London",
-      "photo": "public/squad/yahya.png",
+      "photo": "assets/squad/yahya.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -127,7 +127,7 @@
       "group": "Midfielders",
       "position": "CM",
       "birthplace": "Southall, West London",
-      "photo": "public/squad/luqman.png",
+      "photo": "assets/squad/luqman.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -138,7 +138,7 @@
       "group": "Midfielders",
       "position": "CM",
       "birthplace": "West London",
-      "photo": "public/squad/ayoub.png",
+      "photo": "assets/squad/ayoub.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null
@@ -149,7 +149,7 @@
       "group": "Forwards",
       "position": "ST",
       "birthplace": "West London",
-      "photo": "public/squad/hamze-k.png",
+      "photo": "assets/squad/hamze-k.png",
       "signedFor": "",
       "funFact": "",
       "fakeStat": null

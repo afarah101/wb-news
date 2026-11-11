@@ -57,7 +57,7 @@
   .sq-hero{margin-left:0;margin-right:0;min-height:440px}
   .sq-hero-img{height:440px;margin-right:0}
   .sq-hero-txt{padding-left:var(--s5)}
-  .sq-tiles{grid-template-columns:repeat(3,minmax(0,1fr))} /* Position, Place of Birth, Signed for WB in one row; Fun Fact below */
+  .sq-tiles{grid-template-columns:repeat(3,minmax(0,1fr))} /* Position, From, Signed for WB in one row; Fun Fact below */
   .sq-tile:nth-child(3){grid-column:auto}
 }
 @media (min-width:960px){

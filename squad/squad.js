@@ -97,7 +97,7 @@
     var tiles = el('dl', 'sq-tiles');
     tiles.append(
       tile('Position', positionName(p.position)),
-      tile('Place of Birth', shown(p.birthplace)),
+      tile('From', shown(p.birthplace)),
       tile('Signed for WB', shown(p.signedFor)),
       tile('Fun Fact', shown(p.funFact))
     );

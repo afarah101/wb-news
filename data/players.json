@@ -1,0 +1,158 @@
+{
+  "players": [
+    {
+      "id": "shamz",
+      "name": "Shamz",
+      "group": "Defenders",
+      "position": "CB",
+      "birthplace": "Southall, West London",
+      "photo": "public/squad/shamz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "mo-bouch",
+      "name": "Mo Bouch",
+      "group": "Defenders",
+      "position": "CB",
+      "birthplace": "Grove, West London",
+      "photo": "public/squad/mo-bouch.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ahmed-pb",
+      "name": "Ahmed PB",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "Southall, West London",
+      "photo": "public/squad/ahmed-pb.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "westway",
+      "name": "Westway",
+      "group": "Defenders",
+      "position": "RB",
+      "birthplace": "Westway Sports Centre, London",
+      "photo": "public/squad/westway.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ruislip",
+      "name": "Ruislip",
+      "group": "Defenders",
+      "position": "RB",
+      "birthplace": "Fulham, West London",
+      "photo": "public/squad/ruislip.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ragz",
+      "name": "Ragz",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "Westfield, West London",
+      "photo": "public/squad/ragz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "sudz",
+      "name": "Sudz",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "Grove, West London",
+      "photo": "public/squad/sudz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "af",
+      "name": "AF",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "Southall, West London",
+      "photo": "public/squad/af.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "hanad-grove",
+      "name": "Hanad Grove",
+      "group": "Midfielders",
+      "position": "CDM",
+      "birthplace": "In between Hayes & Grove, West London",
+      "photo": "public/squad/hanad-grove.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "hanad-southall",
+      "name": "Hanad Southall",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "Southall, West London",
+      "photo": "public/squad/hanad-southall.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "yahya",
+      "name": "Yahya",
+      "group": "Midfielders",
+      "position": "LW",
+      "birthplace": "Southall, West London",
+      "photo": "public/squad/yahya.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "luqman",
+      "name": "Luqman",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "Southall, West London",
+      "photo": "public/squad/luqman.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ayoub",
+      "name": "Ayoub",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "West London",
+      "photo": "public/squad/ayoub.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "hamze-k",
+      "name": "Hamze K",
+      "group": "Forwards",
+      "position": "ST",
+      "birthplace": "West London",
+      "photo": "public/squad/hamze-k.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    }
+  ]
+}

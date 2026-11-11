@@ -27,7 +27,11 @@
     '<div class="dr-head"><h2 id="drawer-title">Issues</h2>' +
     '<button class="icon-btn" type="button" aria-label="Close issues menu">' +
     '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-    '</button></div><div class="season">THURSDAY SESSIONS · NEWEST FIRST</div><ol class="issues"></ol>';
+    '</button></div><div class="season">THURSDAY SESSIONS · NEWEST FIRST</div><ol class="issues"></ol>' +
+    '<div class="season">THE TEAM</div><ol class="issues"><li><a class="issue" href="' + new URL('squad/', base).href + '"' +
+    (location.pathname.replace(/index\.html$/, '') === new URL('squad/', base).pathname ? ' aria-current="page"' : '') + '>' +
+    '<span class="db" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M8 3l-5 3 2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>' +
+    '<span class="tt"><span class="tag"><span>Players</span></span><span class="t">Squad</span></span></a></li></ol>';
   document.body.append(scrim, drawer);
   var list = drawer.querySelector('.issues');
   var closeBtn = drawer.querySelector('.icon-btn');

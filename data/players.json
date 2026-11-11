@@ -1,0 +1,224 @@
+{
+  "players": [
+    {
+      "id": "shamz",
+      "name": "Shamz",
+      "group": "Defenders",
+      "position": "CB",
+      "birthplace": "Southall, West London",
+      "photo": "assets/squad/shamz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "mo-bouch",
+      "name": "Mo Bouch",
+      "group": "Defenders",
+      "position": "CB",
+      "birthplace": "Grove, West London",
+      "photo": "assets/squad/mo-bouch.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ahmed-pb",
+      "name": "Ahmed PB",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "Southall, West London",
+      "photo": "assets/squad/ahmed-pb.png",
+      "signedFor": "",
+      "funFact": "Known as Baked Beans: does exactly what it says on the tin. Nothing more, nothing less. Shows up, delivers, keeps it moving. No wasted movements.",
+      "fakeStat": null
+    },
+    {
+      "id": "westway",
+      "name": "Westway",
+      "group": "Defenders",
+      "position": "RB",
+      "birthplace": "Pitch 5, Westway Sports Centre",
+      "photo": "assets/squad/westway.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ruislip",
+      "name": "Ruislip",
+      "group": "Defenders",
+      "position": "RB",
+      "birthplace": "Fulham, West London",
+      "photo": "assets/squad/ruislip.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ragz",
+      "name": "Ragz",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "Westfield, West London",
+      "photo": "assets/squad/ragz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "sudz",
+      "name": "Sudz",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "Grove, West London",
+      "photo": "assets/squad/sudz.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "skinny",
+      "name": "Skinny",
+      "group": "Defenders",
+      "position": "RB",
+      "birthplace": "Hanwell, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "Never met a challenge he didn't love. If he isn't kicking it into Row Z, he's slide-tackling someone.",
+      "fakeStat": null
+    },
+    {
+      "id": "yusuf-tt",
+      "name": "Yusuf TT",
+      "group": "Defenders",
+      "position": "LB",
+      "birthplace": "White City, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "adam-o",
+      "name": "Adam O",
+      "group": "Defenders",
+      "position": "CB",
+      "birthplace": "White City, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "af",
+      "name": "AF",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "Southall, West London",
+      "photo": "assets/squad/af.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "hanad-grove",
+      "name": "Hanad Grove",
+      "group": "Midfielders",
+      "position": "CDM",
+      "birthplace": "In between Hayes & Grove, West London",
+      "photo": "assets/squad/hanad-grove.png",
+      "signedFor": "",
+      "funFact": "If he isn't watching Only Fools and Horses, you'll usually find him driving at the back four.",
+      "fakeStat": null
+    },
+    {
+      "id": "hanad-southall",
+      "name": "Hanad Southall",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "Southall, West London",
+      "photo": "assets/squad/hanad-southall.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "yahya",
+      "name": "Yahya",
+      "group": "Midfielders",
+      "position": "LW",
+      "birthplace": "Southall, West London",
+      "photo": "assets/squad/yahya.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "luqman",
+      "name": "Luqman",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "Shepherds Bush, West London",
+      "photo": "assets/squad/luqman.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ayoub",
+      "name": "Ayoub",
+      "group": "Midfielders",
+      "position": "CM",
+      "birthplace": "West London",
+      "photo": "assets/squad/ayoub.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "dualeh",
+      "name": "Dualeh",
+      "group": "Midfielders",
+      "position": "CAM",
+      "birthplace": "Just The Behind Striker, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "yusuf-isco",
+      "name": "Yusuf Isco",
+      "group": "Midfielders",
+      "position": "LW",
+      "birthplace": "White City, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "hamze-k",
+      "name": "Hamze K",
+      "group": "Forwards",
+      "position": "ST",
+      "birthplace": "West London",
+      "photo": "assets/squad/hamze-k.png",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    },
+    {
+      "id": "ali-awil",
+      "name": "Ali Awil",
+      "group": "Forwards",
+      "position": "ST",
+      "birthplace": "Grove, West London",
+      "photo": "",
+      "signedFor": "",
+      "funFact": "",
+      "fakeStat": null
+    }
+  ]
+}

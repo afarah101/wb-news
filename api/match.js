@@ -25,10 +25,20 @@ function cleanWeek(w) {
   const squad = {}, paid = {};
   for (const [pid, side] of Object.entries(w.squad || {}).slice(0, 60)) if (PID.test(pid) && (side === 'A' || side === 'B')) squad[pid] = side;
   for (const pid of Object.keys(w.paid || {})) if (squad[pid] && w.paid[pid] === true) paid[pid] = true;
-  const games = (Array.isArray(w.games) ? w.games : []).slice(0, 12).map(g => ({
-    a: int(g && g.a, 0, 99), b: int(g && g.b, 0, 99),
-    status: STATUSES.includes(g && g.status) ? g.status : 'upcoming'
-  }));
+  // Each goal: { s: 'A'|'B' (team that gets the goal), by: player id | 'og' (own goal) | '' (not credited yet), as: player id | '' (no assist) }
+  const games = (Array.isArray(w.games) ? w.games : []).slice(0, 12).map(g => {
+    const goals = (Array.isArray(g && g.goals) ? g.goals : []).slice(0, 198).map(x => {
+      const by = x && (x.by === 'og' || PID.test(x.by || '')) ? x.by : '';
+      const as = x && by && by !== 'og' && PID.test(x.as || '') && x.as !== by ? x.as : '';
+      return { s: x && x.s === 'B' ? 'B' : 'A', by, as };
+    });
+    const count = s => goals.filter(x => x.s === s).length;
+    return {
+      a: Math.max(int(g && g.a, 0, 99), count('A')), b: Math.max(int(g && g.b, 0, 99), count('B')),
+      status: STATUSES.includes(g && g.status) ? g.status : 'upcoming',
+      goals
+    };
+  });
   return {
     id: w.id,
     fee: Math.min(100, Math.max(0, Math.round((Number(w.fee) || 0) * 100) / 100)),

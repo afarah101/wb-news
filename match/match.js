@@ -1,6 +1,7 @@
 /* Match Centre: match nights (two teams), live scores, the table, payments and player profiles.
    Squad players come from data/players.json. Everything else comes from /api/match, which keeps one JSON document:
    { v, players: {id: {name, nickname, photoV}}, weeks: {"YYYY-MM-DD": {fee, teams, squad, paid, games}} }.
+   Each game is {a, b, status, goals}; goals lists every goal with the team, the scorer ('og' for an own goal) and the assist.
    Everyone can read; changes need the admin PIN (the ADMIN_PIN setting in Vercel).
    Viewers poll for changes: every 3 s while a game is live, every 15 s otherwise, never while the tab is hidden. */
 (function () {
@@ -52,6 +53,32 @@
     if (i == null || i >= gs.length) { i = gs.findIndex(function (g) { return g.status === 'live'; }); if (i < 0) i = gs.length - 1; }
     return i;
   }
+  /* Goals: game.goals = [{ s: 'A'|'B', by: player id | 'og' | '', as: player id | '' }].
+     Games scored before goals were recorded only have a number, so the gap shows as goals still to credit (idx -1). */
+  function goalList(g) {
+    var gl = (Array.isArray(g.goals) ? g.goals : []).map(function (x, i) { return { s: x.s === 'B' ? 'B' : 'A', by: x.by || '', as: x.as || '', idx: i }; });
+    ['A', 'B'].forEach(function (s) {
+      var extra = (+g[s === 'A' ? 'a' : 'b'] || 0) - gl.filter(function (x) { return x.s === s; }).length;
+      for (var k = 0; k < extra; k++) gl.push({ s: s, by: '', as: '', idx: -1 });
+    });
+    return gl;
+  }
+  function scorerName(id) { return id === 'og' ? 'Own goal' : pName(S.players.get(id)); }
+  function nightTotals(w) { // { goals: {pid: n}, assists: {pid: n}, open: goals still without a scorer }
+    var t = { goals: {}, assists: {}, open: 0 };
+    games(w).forEach(function (g) {
+      goalList(g).forEach(function (x) {
+        if (!x.by) { t.open++; return; }
+        if (x.by !== 'og') t.goals[x.by] = (t.goals[x.by] || 0) + 1;
+        if (x.as) t.assists[x.as] = (t.assists[x.as] || 0) + 1;
+      });
+    });
+    return t;
+  }
+  function tally(map) { // "Shamz 2, Mo Bouch 1"
+    return Object.keys(map).sort(function (a, b) { return map[b] - map[a] || scorerName(a).localeCompare(scorerName(b)); })
+      .map(function (id) { return scorerName(id) + (map[id] > 1 ? ' ' + map[id] : ''); }).join(', ');
+  }
   function anyLive() { return S.weeks.some(function (w) { return games(w).some(function (g) { return g.status === 'live'; }); }); }
   function toast(msg) {
     var t = $('#toast'); t.textContent = msg; t.classList.add('on');
@@ -75,9 +102,11 @@
 
   function computeStats() {
     var st = {};
-    S.players.forEach(function (p) { st[p.id] = { p: 0, w: 0, d: 0, l: 0, nights: 0, owed: 0, unpaid: [], form: [], log: [] }; });
+    S.players.forEach(function (p) { st[p.id] = { p: 0, w: 0, d: 0, l: 0, g: 0, a: 0, nights: 0, owed: 0, unpaid: [], form: [], log: [] }; });
     S.weeks.slice().reverse().forEach(function (w) {
-      var fee = +w.fee || 0;
+      var fee = +w.fee || 0, tot = nightTotals(w);
+      Object.keys(tot.goals).forEach(function (pid) { if (st[pid]) st[pid].g += tot.goals[pid]; });
+      Object.keys(tot.assists).forEach(function (pid) { if (st[pid]) st[pid].a += tot.assists[pid]; });
       Object.keys(w.squad || {}).forEach(function (pid) {
         var s = st[pid], side = w.squad[pid];
         if (!s || (side !== 'A' && side !== 'B')) return;
@@ -90,7 +119,7 @@
           var r = mine > theirs ? 'W' : mine < theirs ? 'L' : 'D';
           s.p++; s[r.toLowerCase()]++; s.form.push(r); res.push({ r: r, mine: mine, theirs: theirs });
         });
-        s.log.push({ wid: w.id, side: side, res: res });
+        s.log.push({ wid: w.id, side: side, res: res, g: tot.goals[pid] || 0, a: tot.assists[pid] || 0 });
       });
     });
     Object.keys(st).forEach(function (k) { var s = st[k]; s.pts = s.w * 3 + s.d; s.pct = s.p ? Math.round(s.w / s.p * 100) : 0; s.form = s.form.slice(-5); s.log.reverse(); });
@@ -231,6 +260,7 @@
       board = '<div class="board"><div class="board-top"><span class="label">' + (gs.length > 1 ? 'Game ' + (gi + 1) + ' of ' + gs.length : 'Tonight\'s game') + '</span><span class="spacer"></span>' +
         '<span class="mc-status ' + (g.status === 'live' ? 'live' : g.status === 'ft' ? 'ft' : '') + '">' + label + '</span></div>' +
         '<div class="mc-score">' + side('A', A, +g.a || 0) + '<span class="dash">–</span>' + side('B', B, +g.b || 0) + '</div>' +
+        scorersHtml(g) +
         (chips || admin ? '<div class="board-foot">' + chips + (chips && admin ? '<span class="spacer"></span>' : '') + admin + '</div>' : '') + '</div>';
     } else {
       board = '<div class="board"><div class="board-empty">' + (S.admin ? '<button class="btn sm wb" data-action="add-game">Add a game</button>' : 'No game set up for this night yet.') + '</div></div>';
@@ -242,12 +272,27 @@
           : '<p class="empty">' + (S.admin ? 'Use Pick teams to add players.' : 'Teams not picked yet.') + '</p>') + '</div>';
     }
 
+    function scorersHtml(game) {
+      var gl = goalList(game); if (!gl.length) return '';
+      var open = gl.filter(function (x) { return !x.by; }).length;
+      function col(s) {
+        return '<ul class="scorers-col">' + gl.filter(function (x) { return x.s === s; }).map(function (x) {
+          var who = x.by ? esc(scorerName(x.by)) : '<span class="tbc">' + (S.admin ? 'Add scorer' : 'Scorer to come') + '</span>';
+          var inner = '<span class="who">' + who + '</span>' + (x.as ? '<span class="ast">Assist: ' + esc(scorerName(x.as)) + '</span>' : '');
+          return '<li>' + (S.admin ? '<button class="goal-btn" data-action="edit-goal" data-i="' + x.idx + '" data-side="' + s + '">' + inner + '</button>' : inner) + '</li>';
+        }).join('') + '</ul>';
+      }
+      return '<div class="scorers">' + col('A') + col('B') + '</div>' +
+        (S.admin && open ? '<div class="scorers-open">' + open + ' goal' + (open === 1 ? '' : 's') + ' still need' + (open === 1 ? 's' : '') + ' a scorer. Tap ' + (open === 1 ? 'it' : 'each one') + ' to add who scored and who assisted.</div>' : '');
+    }
+
     var weekOpts = S.weeks.map(function (x, i) { return '<option value="' + esc(x.id) + '"' + (x.id === w.id ? ' selected' : '') + '>' + fmtDate(x.id) + (i === 0 ? ' (latest)' : '') + '</option>'; }).join('');
 
     el.innerHTML =
       '<div class="night row"><div><div class="label">' + (fee ? money(fee) + ' a head' + (total ? ' · ' + paidCount + ' of ' + total + ' paid' : '') : 'Match night') + '</div>' +
       '<h2>' + fmtDate(w.id, true) + '</h2></div><span class="spacer"></span>' +
-      (S.weeks.length > 1 ? '<select class="btn" id="weekSel" aria-label="Choose a night">' + weekOpts + '</select>' : '') + '</div>' +
+      (S.weeks.length > 1 ? '<select class="btn" id="weekSel" aria-label="Choose a night">' + weekOpts + '</select>' : '') +
+      (gs.some(function (x) { return goalList(x).length; }) ? '<button class="btn" data-action="copy-stats">Copy stats</button>' : '') + '</div>' +
       (S.admin ? '<div class="row"><button class="btn' + (S.picking ? ' primary' : '') + '" data-action="toggle-pick" aria-expanded="' + S.picking + '">' + (S.picking ? 'Done picking' : 'Pick teams') + '</button>' +
         '<button class="btn" data-action="edit-night">Edit night</button><button class="btn" data-action="new-night">New night</button></div>' : '') +
       (S.admin && S.picking ? pickerHtml(w, A, B, sA.length, sB.length) : '') +
@@ -277,13 +322,21 @@
     var rows = Array.from(S.players.values()).map(function (p) { return { p: p, s: S.stats[p.id] }; })
       .sort(function (a, b) { return b.s.pts - a.s.pts || b.s.pct - a.s.pct || b.s.p - a.s.p || byName(a.p, b.p); });
     var done = S.weeks.reduce(function (n, w) { return n + games(w).filter(function (g) { return g.status === 'ft'; }).length; }, 0);
+    function leaders(key, title, unit) {
+      var top = rows.filter(function (r) { return r.s[key] > 0; })
+        .sort(function (a, b) { return b.s[key] - a.s[key] || a.s.p - b.s.p || byName(a.p, b.p); }).slice(0, 5);
+      return '<div class="leaders-col"><div class="label">' + title + '</div>' + (top.length ? '<ol>' + top.map(function (r) {
+        return '<li data-action="open-player" data-pid="' + esc(r.p.id) + '">' + avatar(r.p, 'av36') + '<span class="nm">' + esc(pName(r.p)) + '</span><b class="num">' + r.s[key] + '</b></li>';
+      }).join('') + '</ol>' : '<p class="muted" style="font-size:14px;margin-top:8px">No ' + unit + ' recorded yet.</p>') + '</div>';
+    }
     el.innerHTML = '<div><div class="label">All Thursdays · ' + done + ' game' + (done === 1 ? '' : 's') + ' played</div>' +
       '<p class="muted" style="margin-top:6px;font-size:14px">3 points for a win, 1 for a draw. Only finished games count.</p></div>' +
-      '<div class="tbl"><table><thead><tr><th>#</th><th class="pl">Player</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th><th title="Points">Pts</th><th>Form</th><th>Owes</th></tr></thead><tbody>' +
+      '<div class="leaders">' + leaders('g', 'Top scorers', 'goals') + leaders('a', 'Most assists', 'assists') + '</div>' +
+      '<div class="tbl"><table><thead><tr><th>#</th><th class="pl">Player</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th><th title="Points">Pts</th><th title="Goals">G</th><th title="Assists">A</th><th>Form</th><th>Owes</th></tr></thead><tbody>' +
       rows.map(function (r, i) {
         return '<tr data-action="open-player" data-pid="' + esc(r.p.id) + '" tabindex="0"><td class="rank muted">' + (i + 1) + '</td>' +
           '<td class="pl"><div class="row">' + avatar(r.p, 'av36') + '<b>' + esc(pName(r.p)) + '</b></div></td>' +
-          '<td>' + r.s.p + '</td><td>' + r.s.w + '</td><td>' + r.s.d + '</td><td>' + r.s.l + '</td><td class="pts">' + r.s.pts + '</td>' +
+          '<td>' + r.s.p + '</td><td>' + r.s.w + '</td><td>' + r.s.d + '</td><td>' + r.s.l + '</td><td class="pts">' + r.s.pts + '</td><td>' + r.s.g + '</td><td>' + r.s.a + '</td>' +
           '<td>' + formHtml(r.s.form) + '</td><td>' + (r.s.owed ? '<span class="pay owes">' + money(r.s.owed) + '</span>' : '<span class="pay paid">Paid</span>') + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   }
@@ -300,6 +353,7 @@
         return '<li><button class="pcard" data-action="open-player" data-pid="' + esc(p.id) + '">' + avatar(p, 'av96') +
           '<span class="nick">' + esc(pName(p)) + '</span>' + (p.nickname && p.name ? '<span class="real">' + esc(p.name) + '</span>' : '') +
           '<span class="rec num">W' + s.w + ' · D' + s.d + ' · L' + s.l + '</span>' +
+          '<span class="rec num muted">' + s.g + ' goal' + (s.g === 1 ? '' : 's') + ' · ' + s.a + ' assist' + (s.a === 1 ? '' : 's') + '</span>' +
           (s.owed ? '<span class="pay owes">Owes ' + money(s.owed) + '</span>' : '<span class="pay paid">All paid</span>') + '</button></li>';
       }).join('') + '</ul>';
   }
@@ -317,8 +371,12 @@
       }).join('');
       var ids = Object.keys(w.squad || {}).filter(function (pid) { return S.players.has(pid); });
       var unpaid = fee ? ids.filter(function (pid) { return !(w.paid && w.paid[pid]); }).length : 0;
+      var tot = nightTotals(w), gl = tally(tot.goals), al = tally(tot.assists);
       return '<button class="hist" data-action="open-week" data-wid="' + esc(w.id) + '"><span class="row"><b class="d">' + fmtDate(w.id, true) + '</b><span class="spacer"></span><span class="muted num">' + n('A') + ' v ' + n('B') + '</span></span>' +
         '<span class="res">' + (res || '<span class="muted">No games</span>') + '</span>' +
+        (gl ? '<span class="hist-st"><b>Goals</b> ' + esc(gl) + '</span>' : '') +
+        (al ? '<span class="hist-st"><b>Assists</b> ' + esc(al) + '</span>' : '') +
+        (tot.open ? '<span class="hist-st" style="color:#a12a17">' + tot.open + ' goal' + (tot.open === 1 ? '' : 's') + ' without a scorer</span>' : '') +
         (fee ? '<span style="font-size:14px;color:' + (unpaid ? '#a12a17' : 'var(--muted)') + '">' + (unpaid ? unpaid + ' still owe ' + money(fee) : 'Everyone paid') + '</span>' : '') + '</button>';
     }).join('');
   }
@@ -340,7 +398,9 @@
       var w = S.weeks.find(function (x) { return x.id === e.wid; }); if (!w) return '';
       var t = teamOf(w, e.side);
       var r = e.res.length ? e.res.map(function (x) { return '<span class="form"><i class="' + x.r + '">' + x.r + '</i></span> <span class="num">' + x.mine + '–' + x.theirs + '</span>'; }).join(' &nbsp;') : '<span class="muted">No result</span>';
-      return '<li><span class="num" style="min-width:96px">' + fmtDate(e.wid) + '</span><span class="row" style="flex:1;gap:6px"><span class="dot" style="--team:' + t.color + '"></span>' + esc(t.name) + '</span><span>' + r + '</span></li>';
+      var ga = [e.g ? e.g + ' goal' + (e.g === 1 ? '' : 's') : '', e.a ? e.a + ' assist' + (e.a === 1 ? '' : 's') : ''].filter(Boolean).join(', ');
+      return '<li><span class="num" style="min-width:96px">' + fmtDate(e.wid) + '</span><span class="row" style="flex:1;gap:6px"><span class="dot" style="--team:' + t.color + '"></span>' + esc(t.name) + '</span><span>' + r + '</span>' +
+        (ga ? '<span class="num muted" style="flex-basis:100%;font-size:14px">' + ga + '</span>' : '') + '</li>';
     }).join('');
     var unpaid = s.unpaid.map(function (wid) {
       var w = S.weeks.find(function (x) { return x.id === wid; });
@@ -351,6 +411,7 @@
       '<div class="row" style="flex-wrap:nowrap">' + avatar(p, 'av96') + '<div style="min-width:0"><h2>' + esc(pName(p)) + '</h2>' +
       (p.nickname && p.name ? '<div class="muted">' + esc(p.name) + '</div>' : '') + '<div class="muted" style="font-size:14px">' + s.nights + ' night' + (s.nights === 1 ? '' : 's') + ' played</div></div></div>' +
       '<div class="tiles"><div class="tile"><b>' + s.p + '</b><span>Played</span></div><div class="tile"><b>' + s.w + '</b><span>Won</span></div><div class="tile"><b>' + s.d + '</b><span>Drawn</span></div><div class="tile"><b>' + s.l + '</b><span>Lost</span></div><div class="tile"><b>' + s.pct + '%</b><span>Win rate</span></div></div>' +
+      '<div class="tiles t3"><div class="tile"><b>' + s.g + '</b><span>Goals</span></div><div class="tile"><b>' + s.a + '</b><span>Assists</span></div><div class="tile"><b>' + (s.g + s.a) + '</b><span>Goals + assists</span></div></div>' +
       '<div class="row"><span class="label">Form</span>' + formHtml(s.form) + '</div>' +
       '<div><div class="row"><span class="label">Subs</span><span class="spacer"></span>' + (s.owed ? '<span class="pay owes">Owes ' + money(s.owed) + '</span>' : '<span class="pay paid">All paid</span>') + '</div>' +
       (unpaid ? '<ul class="log" style="margin-top:8px">' + unpaid + '</ul>' + (S.admin && s.unpaid.length > 1 ? '<button class="btn sm" data-action="pay-all" data-pid="' + esc(pid) + '" style="margin-top:8px">Mark all paid</button>' : '') : '') + '</div>' +
@@ -396,6 +457,61 @@
       '<div class="field"><label for="lf-pin">Admin PIN</label><input type="password" id="lf-pin" required autocomplete="current-password" inputmode="numeric"></div>' +
       '<p class="muted" style="font-size:14px">Admins pick the teams, update the score and mark subs. Everyone else can watch.</p>' +
       '<div class="row"><button type="submit" class="btn primary">Sign in</button><button type="button" class="btn" data-action="close">Cancel</button></div></form>', 'Admin sign in');
+  }
+
+  /* Who scored and who assisted. S.goal = { wid, gi, idx (index in game.goals, -1 = a goal still to credit), s, all, fresh } */
+  function goalSheet(step) {
+    var G = S.goal, w = G && S.weeks.find(function (x) { return x.id === G.wid; }), g = w && games(w)[G.gi];
+    if (!g) { closeSheet(); return; }
+    var x = G.idx >= 0 ? (g.goals || [])[G.idx] : { s: G.s, by: '', as: '' };
+    if (!x || x.s !== G.s) { closeSheet(); toast('That goal has just changed. Tap it again.'); return; }
+    var t = teamOf(w, G.s), squad = w.squad || {};
+    var mates = Object.keys(squad).filter(function (pid) { return squad[pid] === G.s && S.players.has(pid); }).map(function (pid) { return S.players.get(pid); });
+    var list = (G.all || !mates.length ? Array.from(S.players.values()) : mates).sort(byName);
+    if (step === 'as') list = list.filter(function (p) { return p.id !== x.by; });
+    var cur = step === 'as' ? x.as : x.by;
+    function pick(p) {
+      return '<li><button class="pick" data-action="goal-' + step + '" data-v="' + esc(p.id) + '" aria-pressed="' + (cur === p.id) + '">' + avatar(p, 'av36') + '<span class="nm">' + esc(pName(p)) + '</span></button></li>';
+    }
+    var more = mates.length ? '<button class="mc-link" data-action="goal-all" data-step="' + step + '">' + (G.all ? 'Only show ' + esc(t.name) : 'Not listed? Show every player') + '</button>' : '';
+    var html = step === 'as'
+      ? '<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + ' · ' + esc(scorerName(x.by)) + '</div><h2 style="margin-top:6px">Who set it up?</h2></div>' +
+        '<ul class="picks">' + list.map(pick).join('') + '<li><button class="pick" data-action="goal-as" data-v="" aria-pressed="' + (!x.as && G.idx >= 0 && !G.fresh) + '"><span class="nm">No assist</span><span class="muted" style="font-size:13px">Solo goal, penalty, rebound</span></button></li></ul>' +
+        '<div class="row">' + more + '<span class="spacer"></span><button class="btn" data-action="goal-step" data-step="by">Back</button></div>'
+      : '<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + '</div><h2 style="margin-top:6px">Who scored?</h2></div>' +
+        '<ul class="picks">' + list.map(pick).join('') + '<li><button class="pick" data-action="goal-by" data-v="og" aria-pressed="' + (x.by === 'og') + '"><span class="nm">Own goal</span><span class="muted" style="font-size:13px">Put in by the other team</span></button></li></ul>' +
+        '<div class="row">' + more + '<span class="spacer"></span>' +
+        (G.fresh ? '<button class="btn" data-action="goal-later">Add later</button>' : '<button class="btn danger" data-action="delete-goal">Delete goal</button><button class="btn" data-action="close">Cancel</button>') + '</div>';
+    openSheet(html, step === 'as' ? 'Who set it up?' : 'Who scored?');
+  }
+  function saveGoal(fn) {
+    var G = S.goal;
+    mutateWeek(G.wid, function (x) {
+      var g = x.games && x.games[G.gi]; if (!g) return;
+      g.goals = Array.isArray(g.goals) ? g.goals : [];
+      var e = G.idx >= 0 ? g.goals[G.idx] : null;
+      if (G.idx < 0) { e = { s: G.s, by: '', as: '' }; g.goals.push(e); G.idx = g.goals.length - 1; }
+      if (!e || e.s !== G.s) return;
+      fn(e);
+      var k = G.s === 'A' ? 'a' : 'b';
+      g[k] = Math.max(+g[k] || 0, g.goals.filter(function (y) { return y.s === G.s; }).length);
+    });
+  }
+  function statsText(w) {
+    var A = teamOf(w, 'A'), B = teamOf(w, 'B'), gs = games(w), lines = ['Western Ballers FC · ' + fmtDate(w.id, true)];
+    gs.forEach(function (g, i) {
+      var gl = goalList(g);
+      if (g.status === 'upcoming' && !gl.length) return;
+      lines.push('', (gs.length > 1 ? 'Game ' + (i + 1) + ': ' : '') + A.name + ' ' + (+g.a || 0) + '–' + (+g.b || 0) + ' ' + B.name + (g.status === 'live' ? ' (still playing)' : ''));
+      ['A', 'B'].forEach(function (s) {
+        var mine = gl.filter(function (x) { return x.s === s; }); if (!mine.length) return;
+        lines.push(teamOf(w, s).name + ': ' + mine.map(function (x) { return (x.by ? scorerName(x.by) : 'scorer not recorded') + (x.as ? ' (assist: ' + scorerName(x.as) + ')' : ''); }).join(', '));
+      });
+    });
+    var tot = nightTotals(w);
+    lines.push('', 'Goals: ' + (tally(tot.goals) || 'none recorded'), 'Assists: ' + (tally(tot.assists) || 'none recorded'));
+    if (tot.open) lines.push(tot.open + ' goal' + (tot.open === 1 ? '' : 's') + ' still without a scorer');
+    return lines.join('\n');
   }
 
   async function fileToPhoto(file) {
@@ -454,11 +570,58 @@
         playerSheet(id); toast('All nights marked paid'); break;
       }
       case 'pick-game': S.gameIdx = +t.dataset.i; render(); break;
-      case 'score': if (w) { var gi = gameIndex(w); mutateWeek(w.id, function (x) {
-        var g = x.games[gi]; if (!g) return; var k = t.dataset.side === 'A' ? 'a' : 'b';
-        g[k] = Math.max(0, Math.min(99, (+g[k] || 0) + (+t.dataset.d)));
-        if (!g.status || g.status === 'upcoming') g.status = 'live';
-      }); } break;
+      case 'score': if (w) {
+        // + adds a goal and asks who scored and assisted; − takes off that team's most recent goal.
+        var gi = gameIndex(w), sd = t.dataset.side, d = +t.dataset.d, newIdx = -1, removed = null;
+        mutateWeek(w.id, function (x) {
+          var g = x.games[gi]; if (!g) return; var k = sd === 'A' ? 'a' : 'b';
+          g.goals = Array.isArray(g.goals) ? g.goals : [];
+          var cnt = g.goals.filter(function (y) { return y.s === sd; }).length, n = +g[k] || 0;
+          if (d > 0) {
+            if (n >= 99) return;
+            g.goals.push({ s: sd, by: '', as: '' }); newIdx = g.goals.length - 1; g[k] = Math.max(n + 1, cnt + 1);
+          } else {
+            if (!n) return;
+            if (cnt) for (var j = g.goals.length - 1; j >= 0; j--) if (g.goals[j].s === sd) { removed = g.goals.splice(j, 1)[0]; break; }
+            g[k] = n - 1;
+          }
+          if (!g.status || g.status === 'upcoming') g.status = 'live';
+        });
+        if (newIdx >= 0) { S.goal = { wid: w.id, gi: gi, idx: newIdx, s: sd, all: false, fresh: true }; goalSheet('by'); }
+        else if (removed && removed.by) toast('Took off ' + (removed.by === 'og' ? 'the own goal' : scorerName(removed.by) + '\'s goal'));
+      } break;
+      case 'edit-goal': if (w) { S.goal = { wid: w.id, gi: gameIndex(w), idx: +t.dataset.i, s: t.dataset.side, all: false, fresh: false }; goalSheet('by'); } break;
+      case 'goal-step': goalSheet(t.dataset.step); break;
+      case 'goal-all': S.goal.all = !S.goal.all; goalSheet(t.dataset.step); break;
+      case 'goal-later': closeSheet(); toast('Goal added. Tap it on the scoreboard to add the scorer.'); break;
+      case 'goal-by': {
+        var by = t.dataset.v;
+        saveGoal(function (e) { e.by = by; if (by === 'og' || e.as === by) e.as = ''; });
+        if (by === 'og') { closeSheet(); toast('Own goal recorded'); } else goalSheet('as');
+        break;
+      }
+      case 'goal-as': {
+        var as = t.dataset.v;
+        var scorer = '';
+        saveGoal(function (e) { e.as = as; scorer = e.by; });
+        closeSheet(); toast('Goal saved: ' + (scorer ? scorerName(scorer) : 'no scorer yet') + (as ? ', assist ' + scorerName(as) : ''));
+        break;
+      }
+      case 'delete-goal': armOrRun(t, function () {
+        var G = S.goal;
+        mutateWeek(G.wid, function (x) {
+          var g = x.games && x.games[G.gi]; if (!g) return; var k = G.s === 'A' ? 'a' : 'b';
+          if (G.idx >= 0) { if (!g.goals || !g.goals[G.idx] || g.goals[G.idx].s !== G.s) return; g.goals.splice(G.idx, 1); }
+          g[k] = Math.max(0, (+g[k] || 0) - 1);
+        });
+        closeSheet(); toast('Goal deleted');
+      }); break;
+      case 'copy-stats': if (w) {
+        var txt = statsText(w);
+        var showIt = function () { openSheet('<h2>Stats for ' + fmtDate(w.id) + '</h2><textarea class="stats-text" readonly rows="12">' + esc(txt) + '</textarea><div class="row"><span class="spacer"></span><button class="btn" data-action="close">Close</button></div>', 'Stats'); var ta = $('.stats-text'); ta.focus(); ta.select(); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { toast('Stats copied. Paste them anywhere.'); }, showIt);
+        else showIt();
+      } break;
       case 'game-status': if (w) { var i2 = gameIndex(w); S.gameIdx = i2; mutateWeek(w.id, function (x) { if (x.games[i2]) x.games[i2].status = t.dataset.s; }); } break;
       case 'add-game': if (w) { S.gameIdx = games(w).length; mutateWeek(w.id, function (x) { x.games = games(x).concat([{ a: 0, b: 0, status: 'upcoming' }]); }); } break;
       case 'remove-game': if (w) armOrRun(t, function () { var i3 = gameIndex(w); S.gameIdx = null; mutateWeek(w.id, function (x) { x.games.splice(i3, 1); }); }); break;

@@ -4,7 +4,8 @@
    lost connection) only counts once.
 
    A night:  { id, fee, target, teams: {A, B}, squad: {pid: 'A'|'B'}, paid: {pid: true}, games: [game] }
-   A game:   { k, a, b, status: 'upcoming'|'live'|'ft', goals: [goal] }
+   A game:   { k, a, b, status: 'upcoming'|'live'|'ft', goals: [goal], start, end }
+             start/end: when it kicked off and finished (server time, ms) for the running clock.
    A goal:   { k, s: 'A'|'B' (team that gets it), by: pid | 'og' (own goal) | '' (not credited), as: pid | '' (no assist) }
    k is a short id, so a change can name the exact game or goal even if the list has moved on.
    target: first to N goals wins a game (default 3, 0 = no limit). The night goes to the team that wins the most games. */
@@ -68,6 +69,8 @@
         return { k: x.k, s: x && x.s === 'B' ? 'B' : 'A', by: by, as: cleanAs(x && x.as, by) };
       });
       var out = { k: g.k, a: 0, b: 0, status: STATUSES.indexOf(g.status) >= 0 ? g.status : 'upcoming', goals: goals };
+      var st = Math.round(Number(g.start) || 0), en = Math.round(Number(g.end) || 0);
+      if (st > 0 && out.status !== 'upcoming') { out.start = st; if (en >= st && out.status === 'ft') out.end = en; }
       out.a = Math.max(int(g.a, 0, MAX_SCORE), count(out, 'A'));
       out.b = Math.max(int(g.b, 0, MAX_SCORE), count(out, 'B'));
       return out;
@@ -82,33 +85,42 @@
     };
   }
 
-  /* Only one game is live at a time: when one goes live, any other live game ends (or goes back to not started if empty). */
-  function oneLive(w, keep) {
-    w.games.forEach(function (g) { if (g !== keep && g.status === 'live') g.status = isEmpty(g) ? 'upcoming' : 'ft'; });
+  /* The running clock: start when a game kicks off, stop at full time, clear if it goes back to not started. */
+  function startClock(g, at) { if (!g.start) g.start = at; delete g.end; }
+  function stopClock(g, at) { if (g.start && !g.end) g.end = at; }
+  function resetClock(g) { delete g.start; delete g.end; }
+  function setStatus(g, st, at) {
+    g.status = st;
+    if (st === 'live') startClock(g, at); else if (st === 'ft') stopClock(g, at); else resetClock(g);
   }
-  function maybeWin(w, g, nextK) { // after a new goal: end the game at the target and kick off the next one
+  /* Only one game is live at a time: when one goes live, any other live game ends (or goes back to not started if empty). */
+  function oneLive(w, keep, at) {
+    w.games.forEach(function (g) { if (g !== keep && g.status === 'live') setStatus(g, isEmpty(g) ? 'upcoming' : 'ft', at); });
+  }
+  function maybeWin(w, g, nextK, at) { // after a new goal: end the game at the target and kick off the next one
     var t = targetOf(w);
     if (!t || g.status === 'ft' || Math.max(score(g, 'A'), score(g, 'B')) < t) return null;
-    g.status = 'ft';
+    setStatus(g, 'ft', at);
     if (w.games.length >= MAX_GAMES) return null;
     var k = KEY.test(nextK || '') && !findGame(w, nextK) ? nextK : uid();
-    var ng = { k: k, a: 0, b: 0, status: 'live', goals: [] };
+    var ng = { k: k, a: 0, b: 0, status: 'live', goals: [], start: at };
     w.games.push(ng);
     return ng;
   }
-  function undoWin(w, g, before) { // after a goal comes off: if that undid the win, reopen the game, as long as the next one hasn't started
+  function undoWin(w, g, before, at) { // after a goal comes off: if that undid the win, reopen the game, as long as the next one hasn't started
     var t = targetOf(w);
     if (!t || g.status !== 'ft' || before < t || Math.max(score(g, 'A'), score(g, 'B')) >= t) return null;
     var i = w.games.indexOf(g), nx = w.games[i + 1];
     if (nx && !isEmpty(nx)) return 'kept';
     if (nx && i + 1 === w.games.length - 1) w.games.splice(i + 1, 1);
-    g.status = 'live'; oneLive(w, g);
+    setStatus(g, 'live', at); oneLive(w, g, at);
     return 'reopened';
   }
 
   /* Apply one change to the whole data { weeks, players, ... }. Returns { ok, why?, ...details for the page }. */
   function apply(data, op) {
     if (!op || typeof op !== 'object') return { ok: false, why: 'bad' };
+    var at = Number(op.at) > 0 ? Math.round(Number(op.at)) : Date.now(); // the server sets this to its own clock
     data.weeks = data.weeks || {};
     var wid = String(op.wid || '');
     if (op.t === 'createWeek') {
@@ -141,7 +153,7 @@
         var before = w.games.length, kept = w.games.filter(function (g) { return g.status === 'ft' || !isEmpty(g); });
         w.games = kept.length ? kept : w.games.slice(0, 1);
         var cut = before - w.games.length;
-        w.games.forEach(function (g) { if (g.status === 'live') g.status = isEmpty(g) ? 'upcoming' : 'ft'; });
+        w.games.forEach(function (g) { if (g.status === 'live') setStatus(g, isEmpty(g) ? 'upcoming' : 'ft', at); });
         return { ok: true, cut: cut };
       }
       case 'addGame': {
@@ -161,8 +173,8 @@
         return { ok: true };
       case 'setStatus':
         if (STATUSES.indexOf(op.status) < 0) return { ok: false, why: 'bad' };
-        g.status = op.status;
-        if (op.status === 'live') oneLive(w, g);
+        setStatus(g, op.status, at);
+        if (op.status === 'live') oneLive(w, g, at);
         return { ok: true };
       case 'addGoal': {
         var by = cleanBy(op.by);
@@ -174,8 +186,8 @@
         var gk = KEY.test(op.k || '') && !g.goals.some(function (x) { return x.k === op.k; }) ? op.k : uid();
         g.goals.push({ k: gk, s: s, by: by, as: cleanAs(op.as, by) });
         setScore(g, s, Math.max(score(g, s) + 1, count(g, s)));
-        if (g.status !== 'live' && g.status !== 'ft') { g.status = 'live'; oneLive(w, g); }
-        var ng = maybeWin(w, g, op.next);
+        if (g.status !== 'live' && g.status !== 'ft') { setStatus(g, 'live', at); oneLive(w, g, at); }
+        var ng = maybeWin(w, g, op.next, at);
         return { ok: true, gk: g.k, won: ng ? { gk: g.k, next: ng.k } : (g.status === 'ft' && targetOf(w) && Math.max(score(g, 'A'), score(g, 'B')) >= targetOf(w) ? { gk: g.k, next: null } : null) };
       }
       case 'creditGoal': { // name the scorer of a goal from before goals were recorded (the score doesn't change)
@@ -203,14 +215,14 @@
           g.goals.splice(di, 1);
         } else if (count(g, s) >= score(g, s)) return { ok: false, why: 'gone' }; // an older goal with no scorer
         setScore(g, gs, score(g, gs) - 1);
-        return { ok: true, undo: undoWin(w, g, before) };
+        return { ok: true, undo: undoWin(w, g, before, at) };
       }
       case 'popGoal': { // the − button: take off that team's most recent goal
         if (!score(g, s)) return { ok: false, why: 'nothing' };
         var removed = null;
         for (var j = g.goals.length - 1; j >= 0; j--) if (g.goals[j].s === s) { removed = g.goals.splice(j, 1)[0]; break; }
         setScore(g, s, score(g, s) - 1);
-        return { ok: true, removed: removed, undo: undoWin(w, g, before) };
+        return { ok: true, removed: removed, undo: undoWin(w, g, before, at) };
       }
     }
     return { ok: false, why: 'unknown' };

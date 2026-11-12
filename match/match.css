@@ -38,6 +38,7 @@ select.btn{appearance:auto;padding-right:var(--s1)}
 .board{background:linear-gradient(160deg,var(--ink-2) 0%,var(--ink) 55%,var(--bezel) 100%);color:var(--on-ink);border-bottom:4px solid var(--wb)}
 .board-top{display:flex;align-items:center;gap:var(--s1);padding:var(--s2);border-bottom:1px solid var(--ink-rule)}
 .board-top .label{color:var(--on-ink-2)}
+.board-top .clock{margin-right:10px;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .mc-status{font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;padding:var(--half) var(--s1);background:var(--ink-rule);color:var(--on-ink)}
 .mc-status.live{background:#d93025}
 .mc-status.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#fff;margin-right:6px;vertical-align:1px;animation:mc-pulse 1.4s infinite}
@@ -69,6 +70,30 @@ select.btn{appearance:auto;padding-right:var(--s1)}
 .nightbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px var(--s1);padding:12px var(--s2);border-top:1px solid var(--ink-rule)}
 .nightbar .label{color:var(--on-ink-2)}
 .nightbar b{font-size:16px;font-weight:800}
+/* tonight's games: one row each */
+.games-list{padding:var(--s2) var(--s2) var(--s1);border-top:1px solid var(--ink-rule)}
+.games-list .label{color:var(--on-ink-2)}
+.games-list ol{list-style:none;margin-top:var(--s1);display:flex;flex-direction:column;gap:6px}
+.gl-row{width:100%;display:flex;flex-direction:column;gap:8px;padding:8px 12px 10px;border:1px solid var(--ink-rule);border-left:4px solid transparent;border-radius:2px;background:rgba(255,255,255,.03);color:var(--on-ink);font:inherit;text-align:left;cursor:pointer}
+.gl-head{display:flex;align-items:center;gap:8px}
+.gl-num{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-2)}
+.gl-row[aria-pressed="true"] .gl-num{color:var(--wb)}
+.gl-row:hover{background:rgba(255,255,255,.08)}
+.gl-row[aria-pressed="true"]{border-color:var(--on-ink-2);border-left-color:var(--wb);background:rgba(255,255,255,.1)}
+.gl-row:focus-visible{outline:3px solid var(--wb);outline-offset:2px}
+.gl-match{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px}
+.gl-match .gl-pill{flex:0 1 auto}
+.gl-pill{padding:6px 12px}
+.gl-pill{display:inline-flex;align-items:center;gap:7px;min-width:0;padding:5px 9px;border-radius:2px;background:var(--team);color:#fff;font-weight:700;white-space:nowrap}
+.gl-pill .gl-name{font-size:15px;overflow:hidden;text-overflow:ellipsis}
+.gl-pill b{font-size:20px;font-weight:800;line-height:1}
+.gl-pill.lose{background:transparent;color:var(--on-ink-2);box-shadow:inset 0 0 0 2px var(--team)}
+.gl-pill.lose b{color:var(--on-ink)}
+.gl-dash{color:var(--on-ink-2);font-weight:800}
+.gl-status{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:2px;background:var(--ink-rule);color:var(--on-ink)}
+.gl-status.live{background:#d93025;color:#fff}
+.gl-status.ft{background:var(--on-ink);color:var(--ink)}
+.gl-time{font-size:13px;font-weight:700;color:var(--on-ink-2);font-variant-numeric:tabular-nums}
 .board-foot{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1);padding:var(--s2);border-top:1px solid var(--ink-rule)}
 .board-foot .btn{background:transparent;color:var(--on-ink);border-color:var(--on-ink-2)}
 .board-foot .btn.wb{background:var(--wb);border-color:var(--wb);color:var(--ink)}
@@ -101,6 +126,7 @@ button.pay{cursor:pointer}
 .picker ul{list-style:none;margin-top:var(--s1)}
 .picker li{display:flex;align-items:center;gap:var(--s1) var(--s2);padding:var(--s1) 0;border-top:1px solid var(--rule)}
 .picker li .nm{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}
+.picker .pick-pay{display:block;margin-top:4px;font-weight:400}
 .seg{display:inline-flex;flex:none;border:2px solid var(--ink);border-radius:2px;overflow:hidden}
 .seg button{min-width:48px;min-height:36px;padding:0 8px;border:0;background:var(--paper);font:inherit;font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .seg button+button{border-left:2px solid var(--ink)}

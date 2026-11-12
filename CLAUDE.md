@@ -16,7 +16,7 @@ Read this before any edit. Where another doc in this repo says something differe
 5. **Squad cards** use the black design and the existing cut-outs. A new player uses the placeholder (`"photo": ""`) until a photo exists.
 6. **Workflow:** work on a branch, open a pull request, Ahmed merges. Never push `main`. Mohammed works on `mo-dev`. Previews share the live database: use TEST data only.
 7. **Before any pull request:** `npm run build` passes, no "undefined", "null" or "NaN" shows on any page, and no page scrolls sideways at 375px.
-8. **Names in issues must match the names in `data/players.json`.** Report any mismatch to Ahmed before opening a pull request.
+8. Player names: data/players.json is the source of truth. In any new or edited content (issues, fun facts, captions, titles, alt text), automatically change any name that clearly matches a profile to the exact profile name, and highlight it orange. If a name could match more than one player, or matches none, do not guess: list it for Ahmed before opening a PR.
 
 ## Rules already in NEW-ISSUE.md
 

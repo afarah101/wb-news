@@ -1,6 +1,6 @@
 /* Squad page: player cards grouped by line, and a profile view opened by #player-id.
    data/players.json is the only source of player data; nothing about a player is written here.
-   Every value goes in with textContent, and an empty value shows as a dash. */
+   Every value goes in with textContent. An empty value shows as a dash on a card and is left out of the profile tiles. */
 (function () {
   var root = new URL('..', document.currentScript.src); // site root: this file lives in /squad/
   var listView = document.querySelector('[data-view="list"]');
@@ -23,17 +23,34 @@
     return e;
   }
   function shown(v) { return typeof v === 'string' && v.trim() !== '' ? v : DASH; }
+  function hashId() { try { return decodeURIComponent(location.hash.slice(1)); } catch (e) { return ''; } } // a mangled address shows the squad, not an error
   function positionName(code) { return POSITIONS[code] || shown(code); }
-  function photo(p, cls, alt, eager) {
-    var img = el('img', cls);
-    img.addEventListener('error', function () { img.src = new URL(PLACEHOLDER, root).href; }, { once: true });
-    img.src = new URL(shown(p.photo) === DASH ? PLACEHOLDER : p.photo, root).href;
+  // Each squad photo assets/squad/<id>.png (600x750) has two AVIF copies made from it: assets/squad/<id>.avif at full size
+  // for the profile, and assets/squad/480/<id>.avif (480x600) for the cards. A browser without AVIF, or a photo without
+  // its copies, falls back to the PNG; a photo that fails altogether falls back to the placeholder.
+  var SQUAD_PHOTO = /^assets\/squad\/([a-z0-9-]+)\.png$/;
+  function photo(p, cls, alt, eager, small) {
+    var pic = el('picture'), img = el('img', cls);
+    var m = SQUAD_PHOTO.exec(typeof p.photo === 'string' ? p.photo : '');
+    if (m) {
+      var src = el('source');
+      src.type = 'image/avif';
+      src.srcset = new URL('assets/squad/' + (small ? '480/' : '') + m[1] + '.avif', root).href;
+      pic.append(src);
+    }
+    img.addEventListener('error', function () {
+      var s = pic.querySelector('source');
+      if (s) s.remove(); // the AVIF copy is missing: the browser now loads the PNG below
+      else if (img.getAttribute('src') !== new URL(PLACEHOLDER, root).href) img.src = new URL(PLACEHOLDER, root).href;
+    });
     img.alt = alt;
-    img.width = 600;
-    img.height = 750;
+    img.width = small ? 480 : 600;
+    img.height = small ? 600 : 750;
     img.decoding = 'async';
-    if (!eager) img.loading = 'lazy';
-    return img;
+    if (eager) img.fetchPriority = 'high'; else img.loading = 'lazy';
+    pic.append(img);
+    img.src = new URL(shown(p.photo) === DASH ? PLACEHOLDER : p.photo, root).href; // set last, inside the <picture>, so only one file is fetched
+    return pic;
   }
 
   var players = [];  // in page order: by group, then as listed in players.json
@@ -42,6 +59,8 @@
   // ---------- list view: one section per group, one card per player ----------
   function renderList() {
     groupsBox.textContent = '';
+    var first = byId[hashId()] ? 0 : 3; // the first row of cards loads straight away (unless a profile is opening instead), the rest as they scroll into view
+    var n = 0;
     GROUPS.forEach(function (group) {
       var inGroup = players.filter(function (p) { return p.group === group; });
       if (!inGroup.length) return;
@@ -55,7 +74,7 @@
         a.id = 'card-' + p.id;
         var txt = el('span', 'sq-txt');
         txt.append(el('b', 'sq-name', shown(p.name)), el('span', 'sq-pos', positionName(p.position)), el('span', 'sq-born', shown(p.birthplace)));
-        a.append(photo(p, 'sq-img', ''), txt);
+        a.append(photo(p, 'sq-img', '', n++ < first, true), txt);
         var li = el('li');
         li.append(a);
         ul.append(li);
@@ -95,12 +114,13 @@
     hero.append(photo(p, 'sq-hero-img', shown(p.name), true), txt);
 
     var tiles = el('dl', 'sq-tiles');
-    tiles.append(
-      tile('Position', positionName(p.position)),
-      tile('From', shown(p.birthplace)),
-      tile('Signed for WB', shown(p.signedFor)),
-      tile('Fun Fact', shown(p.funFact))
-    );
+    // a tile with nothing to say is left out
+    [['Position', positionName(p.position)], ['From', shown(p.birthplace)], ['Signed for WB', shown(p.signedFor)], ['Fun Fact', shown(p.funFact)]].forEach(function (t) {
+      if (t[1] === DASH) return;
+      var d = tile(t[0], t[1]);
+      if (t[0] === 'Fun Fact') d.className += ' wide';
+      tiles.append(d);
+    });
 
     profileView.append(back, hero, tiles);
 
@@ -123,7 +143,7 @@
   // ---------- routing: #player-id opens a profile, anything else shows the squad ----------
   var lastId = '';
   function route() {
-    var id = decodeURIComponent(location.hash.slice(1));
+    var id = hashId();
     var p = byId[id];
     if (p) {
       renderProfile(p);

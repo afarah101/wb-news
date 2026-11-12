@@ -59,7 +59,7 @@ select.btn{appearance:auto;padding-right:var(--s1)}
 .scorers-col+.scorers-col{border-left:1px solid var(--ink-rule)}
 .scorers-col li>span,.goal-btn{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 4px}
 .goal-btn{width:100%;background:none;border:0;border-radius:2px;color:inherit;font:inherit;cursor:pointer}
-.goal-btn:hover{background:var(--ink-rule)}
+@media (hover:hover) and (pointer:fine){.goal-btn:hover{background:var(--ink-rule)}}
 .goal-btn:focus-visible{outline:3px solid var(--wb);outline-offset:-2px}
 .scorers .who{font-size:15px;font-weight:700;overflow-wrap:anywhere}
 .scorers .ast{font-size:12px;color:var(--on-ink-2);overflow-wrap:anywhere}
@@ -78,7 +78,7 @@ select.btn{appearance:auto;padding-right:var(--s1)}
 .gl-head{display:flex;align-items:center;gap:8px}
 .gl-num{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-2)}
 .gl-row[aria-pressed="true"] .gl-num{color:var(--wb)}
-.gl-row:hover{background:rgba(255,255,255,.08)}
+@media (hover:hover) and (pointer:fine){.gl-row:hover{background:rgba(255,255,255,.08)}}
 .gl-row[aria-pressed="true"]{border-color:var(--on-ink-2);border-left-color:var(--wb);background:rgba(255,255,255,.1)}
 .gl-row:focus-visible{outline:3px solid var(--wb);outline-offset:2px}
 .gl-match{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -144,7 +144,7 @@ button.pay{cursor:pointer}
 .tbl td.pl b{font-weight:700}
 .tbl td.pts{font-weight:800}
 .tbl tr[tabindex]{cursor:pointer}
-.tbl tr[tabindex]:hover td{background:var(--paper-2)}
+@media (hover:hover) and (pointer:fine){.tbl tr[tabindex]:hover td{background:var(--paper-2)}}
 .tbl tbody tr:first-child td.rank{color:var(--wb-text);font-weight:800}
 .form{display:inline-flex;gap:3px}
 .form i{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:800;color:#fff;border-radius:2px}
@@ -157,14 +157,14 @@ button.pay{cursor:pointer}
 .leaders-col li{display:flex;align-items:center;gap:var(--s2);padding:var(--s1) 0;border-bottom:1px solid var(--rule);cursor:pointer;counter-increment:ld}
 .leaders-col li::before{content:counter(ld);width:16px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
 .leaders-col li:first-child::before{color:var(--wb-text)}
-.leaders-col li:hover{background:var(--paper-2)}
+@media (hover:hover) and (pointer:fine){.leaders-col li:hover{background:var(--paper-2)}}
 .leaders-col .nm{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}
 .leaders-col b{font-weight:800;font-stretch:87.5%;font-size:22px}
 
 /* ---------- players ---------- */
 .grid{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s2)}
 .pcard{width:100%;display:flex;flex-direction:column;align-items:center;gap:var(--s1);padding:var(--s3) var(--s1) var(--s2);background:var(--paper);border:0;border-top:4px solid var(--ink);font:inherit;color:inherit;text-align:center;cursor:pointer}
-.pcard:hover{background:var(--paper-2)}
+@media (hover:hover) and (pointer:fine){.pcard:hover{background:var(--paper-2)}}
 .pcard .nick{font-weight:800;font-stretch:87.5%;font-size:20px;line-height:1;text-transform:uppercase;overflow-wrap:anywhere}
 .pcard .real{margin-top:-4px;font-size:13px;color:var(--muted)}
 .rec{font-size:14px;font-weight:700}
@@ -194,7 +194,7 @@ button.pay{cursor:pointer}
 .pick{width:100%;min-height:52px;display:flex;align-items:center;gap:var(--s1);flex-wrap:wrap;padding:6px var(--s1);border:2px solid var(--rule);border-radius:2px;background:var(--paper);font:inherit;color:inherit;text-align:left;cursor:pointer}
 .pick .nm{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}
 .pick .muted{flex-basis:100%}
-.pick:hover{border-color:var(--ink)}
+@media (hover:hover) and (pointer:fine){.pick:hover{border-color:var(--ink)}}
 .pick[aria-pressed="true"]{border-color:var(--wb);background:var(--paper-2)}
 .pick:focus-visible{outline:3px solid var(--wb);outline-offset:2px}
 .share-card{display:block;width:100%;height:auto;border:1px solid var(--rule)}
@@ -211,3 +211,18 @@ button.pay{cursor:pointer}
 .hero-empty{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s2);padding:var(--s3) 0;border-top:4px solid var(--ink)}
 .hero-empty h2{font-family:var(--serif);font-weight:700;font-size:28px;letter-spacing:-.02em}
 .hero-empty p{max-width:36em;color:var(--ink-2);font-size:16px;line-height:1.45}
+
+/* ---------- phones: one-line scoreboard bar, 44px touch targets, press feedback ---------- */
+.board-top .label{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board-top .clock,.mc-status{flex:none;white-space:nowrap}
+.mc-tabs a,.mc-link{display:inline-flex;align-items:center;min-height:44px}
+select.btn,.stats-text{font-size:16px} /* under 16px, iPhones zoom the page when the field is focused */
+.btn,.chip,.seg button,button.pay,.pick,.pcard{transition:transform .12s var(--ease)}
+.chip,.seg button,button.pay,.pick,.pcard,.hist,.gl-row,.goal-btn,.mc-tabs a,.mc-link{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btn:active:not(:disabled),.chip:active,.seg button:active,button.pay:active,.pick:active,.pcard:active{transform:scale(.97)}
+.ctrls .btn:active:not(:disabled){transform:scale(.92)} /* the score buttons are pressed most: a deeper press */
+.hist:active,.gl-row:active,.goal-btn:active,.mc-tabs a:active,.mc-link:active,.leaders-col li:active,.tbl tr[tabindex]:active{opacity:.6}
+@media (prefers-reduced-motion:reduce){
+  .btn,.chip,.seg button,button.pay,.pick,.pcard{transition:none}
+  .btn:active:not(:disabled),.ctrls .btn:active:not(:disabled),.chip:active,.seg button:active,button.pay:active,.pick:active,.pcard:active{transform:none;opacity:.7}
+}

@@ -46,9 +46,11 @@
   function pName(p) { return p ? (p.nickname || p.name || 'Player') : 'Former player'; }
   function nameFromId(id) { return /^x-/.test(id) ? 'Former player' : String(id).split('-').map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' '); }
   function initials(p) { var n = (p && (p.nickname || p.name)) || '?'; return n.trim().split(/\s+/).slice(0, 2).map(function (x) { return x[0]; }).join('').toUpperCase(); }
+  // small round avatars use the 96px copy of a squad photo (assets/squad/96/<id>.png); if that copy is missing the full photo loads instead
+  function thumb(src) { return String(src).replace(/(assets\/squad\/)([a-z0-9-]+\.png)$/, function (m, dir, file) { return dir + '96/' + file; }); }
   function avatar(p, cls) {
     return p && p.photo
-      ? '<img class="av ' + cls + '" src="' + esc(p.photo) + '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER + '\'">'
+      ? '<img class="av ' + cls + '" src="' + esc(cls === 'av36' ? thumb(p.photo) : p.photo) + '" data-full="' + esc(p.photo) + '" alt="" loading="lazy" onerror="if(this.dataset.full){this.src=this.dataset.full;delete this.dataset.full}else{this.onerror=null;this.src=\'' + PLACEHOLDER + '\'}">'
       : '<span class="av ' + cls + '" aria-hidden="true">' + esc(initials(p)) + '</span>';
   }
   function byName(a, b) { return pName(a).localeCompare(pName(b)); }
@@ -372,7 +374,7 @@
     if (g) {
       var label = g.status === 'live' ? 'Live' : g.status === 'ft' ? 'Full time' : 'Not started';
       // Tonight's games, one per row: the game number sits apart from the score, and each score is in its team's colour.
-      var chips = (gs.length > 1 || S.admin) ? '<div class="games-list"><div class="label">Tonight\'s games</div><ol>' + gs.map(function (x, i) {
+      var chips = (gs.length > 1 || S.admin) ? '<div class="games-list"><div class="label">Tonight\'s games' + (targetOf(w) ? ' · First to ' + targetOf(w) : '') + '</div><ol>' + gs.map(function (x, i) {
         var a = +x.a || 0, b = +x.b || 0, done = x.status === 'ft', winA = done && a > b, winB = done && b > a, gt = gameTime(x);
         var pill = function (t, n, win, lose, scoreFirst) { // the team's name and score together in its colour; the winner's is solid
           var nm = '<span class="gl-name">' + esc(t.name) + '</span>', sc = '<b class="num">' + n + '</b>';
@@ -390,7 +392,7 @@
         (g.status === 'live' ? '<button class="btn sm wb" data-action="game-status" data-s="ft">Full time</button>' : '') +
         '<button class="btn sm" data-action="add-game">Add another game</button>' +
         (gs.length > 1 ? '<button class="btn sm danger" data-action="remove-game">Remove game ' + (gi + 1) + '</button>' : '')) : '';
-      board = '<div class="board"><div class="board-top"><span class="label">' + (gs.length > 1 ? 'Game ' + (gi + 1) + ' of ' + gs.length : 'Tonight\'s game') + (targetOf(w) ? ' · First to ' + targetOf(w) : '') + '</span><span class="spacer"></span>' +
+      board = '<div class="board"><div class="board-top"><span class="label">' + (gs.length > 1 ? 'Game ' + (gi + 1) + ' of ' + gs.length : targetOf(w) ? 'First to ' + targetOf(w) : 'Tonight\'s game') + '</span><span class="spacer"></span>' +
         clockHtml(g) + '<span class="mc-status ' + (g.status === 'live' ? 'live' : g.status === 'ft' ? 'ft' : '') + '">' + label + '</span></div>' +
         '<div class="mc-score">' + side('A', A, +g.a || 0) + '<span class="dash">–</span>' + side('B', B, +g.b || 0) + '</div>' +
         scorersHtml(g) +

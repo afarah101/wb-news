@@ -177,6 +177,8 @@ button.pay{cursor:pointer}
 .log li{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s1) var(--s2);padding:var(--s1) 0;border-top:1px solid var(--rule)}
 
 .notice{padding:var(--s2);background:var(--paper-2);border-left:4px solid var(--wb);font-size:15px;line-height:1.45}
+.notice.save-warn{border-left-color:#b3261e;background:#fbe4df;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.notice.save-warn .btn{margin-left:auto}
 .notice code{font-size:14px}
 .mc-toast{position:fixed;left:50%;bottom:var(--s3);z-index:50;transform:translateX(-50%);max-width:calc(100% - 32px);display:none;padding:12px var(--s2);background:var(--ink);color:var(--on-ink);font-size:15px;font-weight:700;border-radius:2px}
 .mc-toast.on{display:block}

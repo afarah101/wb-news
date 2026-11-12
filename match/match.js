@@ -610,8 +610,8 @@
     var A = teamOf(w, 'A'), B = teamOf(w, 'B'), lu = lineups(w), nr = nightResult(w), pg = playedGames(w);
     var W = 1080, P = 56, SANS = '"Roboto", "Helvetica Neue", Arial, sans-serif', SERIF = '"Newsreader", Georgia, serif';
     var INK = '#121212', PAPER = '#ffffff', PAPER2 = '#f7f5f2', MUTED = '#5c5c5c', WB = '#F26B1D';
-    var ROW = 92, rows = Math.max(lu.A.length, lu.B.length, 1);
-    var hHead = 200, hRes = 150, hLine = 90 + rows * ROW + 30, hGames = pg.length ? 90 + pg.length * 78 + 30 : 0, hFoot = 80;
+    var ROW = 156, rows = Math.max(lu.A.length, lu.B.length, 1);
+    var hHead = 200, hRes = 250, hLine = 90 + rows * ROW + 30, hGames = pg.length ? 90 + pg.length * 78 + 30 : 0, hFoot = 80;
     var H = hHead + hRes + hLine + hGames + hFoot;
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
@@ -626,12 +626,16 @@
     var hx = P + (crest ? 120 * crest.naturalWidth / crest.naturalHeight + 32 : 0);
     txt('Western Ballers FC', hx, 82, '700 54px ' + SERIF, PAPER);
     txt(fmtDate(w.id, true).toUpperCase(), hx, 138, '800 26px ' + SANS, WB);
-    // result band
-    var winT = nr.winner === 'A' ? A : nr.winner === 'B' ? B : null;
+    // result band: the score in games, big
+    var winT = nr.winner === 'A' ? A : nr.winner === 'B' ? B : null, hi = Math.max(nr.A, nr.B), lo = Math.min(nr.A, nr.B);
     x.fillStyle = winT ? winT.color : '#3a3a3a'; x.fillRect(0, hHead, W, hRes);
-    var head = !nr.played ? 'RESULTS' : nr.winner === 'D' ? (nr.open ? 'ALL LEVEL SO FAR' : 'NIGHT DRAWN') : (winT.name.toUpperCase() + (nr.open ? ' LEAD THE NIGHT' : ' WIN THE NIGHT'));
-    txt(fit(head, W - 2 * P, '900 62px ' + SANS), P, hHead + 62, '900 62px ' + SANS, '#ffffff');
-    if (nr.played) txt(Math.max(nr.A, nr.B) + '–' + Math.min(nr.A, nr.B) + ' on games' + (nr.open ? ' · still playing' : ''), P, hHead + 116, '700 30px ' + SANS, 'rgba(255,255,255,.9)');
+    var head = !nr.played ? 'RESULTS' : nr.winner === 'D' ? (nr.open ? 'LEVEL ' : 'DRAW ') + hi + '–' + lo : winT.name.toUpperCase() + (nr.open ? ' LEAD ' : ' WIN ') + hi + '–' + lo;
+    var hf = '900 112px ' + SANS; x.font = hf; var hs = Math.min(112, Math.floor(112 * (W - 2 * P) / Math.max(1, x.measureText(head).width)));
+    txt(head, P, hHead + 100, '900 ' + hs + 'px ' + SANS, '#ffffff');
+    if (nr.played) {
+      var by = hi - lo, sub = nr.winner === 'D' ? 'Level on games' : (nr.open ? 'Leading' : 'Won the night') + ' by ' + by + ' game' + (by === 1 ? '' : 's');
+      txt(sub + ' · ' + nr.played + ' game' + (nr.played === 1 ? '' : 's') + ' played' + (nr.open ? ' · still playing' : ''), P, hHead + 196, '700 36px ' + SANS, 'rgba(255,255,255,.92)');
+    }
     // line-ups
     var y0 = hHead + hRes; x.fillStyle = PAPER; x.fillRect(0, y0, W, hLine + hGames + hFoot);
     var colW = (W - 2 * P - 40) / 2;
@@ -641,20 +645,22 @@
       txt(t.name.toUpperCase(), cx, y + 42, '800 30px ' + SANS, INK);
       y += 80;
       lu[sd].forEach(function (r, k) {
-        var cy = y + k * ROW + ROW / 2, R = 34, im = photo.get(r.p.id);
+        // big photo on the left; name on top, goals and assists underneath
+        var cy = y + k * ROW + ROW / 2, R = 62, im = photo.get(r.p.id), tx = cx + 2 * R + 20;
         x.save(); x.beginPath(); x.arc(cx + R, cy, R, 0, Math.PI * 2); x.closePath(); x.fillStyle = PAPER2; x.fill(); x.clip();
         if (im) { var sz = Math.min(im.naturalWidth, im.naturalHeight); x.drawImage(im, (im.naturalWidth - sz) / 2, (im.naturalHeight - sz) * 0.12, sz, sz, cx, cy - R, 2 * R, 2 * R); }
-        else txt(initials(r.p), cx + R, cy + 1, '800 24px ' + SANS, MUTED, 'center');
+        else txt(initials(r.p), cx + R, cy + 2, '800 40px ' + SANS, MUTED, 'center');
         x.restore();
-        // badges from the right
-        var bx = cx + colW, font = '800 24px ' + SANS;
-        [['A', r.a, INK], ['G', r.g, WB]].forEach(function (b) {
+        var has = r.g || r.a;
+        txt(fit(pName(r.p), cx + colW - tx, '800 36px ' + SANS), tx, has ? cy - 24 : cy, '800 36px ' + SANS, INK);
+        var bx = tx, font = '800 26px ' + SANS;
+        [['G', r.g, WB, INK, ' goal', ' goals'], ['A', r.a, INK, '#ffffff', ' assist', ' assists']].forEach(function (b) {
           if (!b[1]) return;
-          var label = b[1] + ' ' + b[0]; x.font = font; var bw = x.measureText(label).width + 24;
-          bx -= bw; x.fillStyle = b[2]; x.beginPath(); if (x.roundRect) x.roundRect(bx, cy - 20, bw, 40, 6); else x.rect(bx, cy - 20, bw, 40); x.fill();
-          txt(label, bx + bw / 2, cy + 1, font, b[0] === 'G' ? INK : '#ffffff', 'center'); bx -= 8;
+          var label = b[1] + (b[1] === 1 ? b[4] : b[5]); x.font = font; var bw = x.measureText(label).width + 26;
+          if (bx + bw > cx + colW) return;
+          x.fillStyle = b[2]; x.beginPath(); if (x.roundRect) x.roundRect(bx, cy + 6, bw, 42, 6); else x.rect(bx, cy + 6, bw, 42); x.fill();
+          txt(label, bx + bw / 2, cy + 28, font, b[3], 'center'); bx += bw + 10;
         });
-        txt(fit(pName(r.p), bx - (cx + 2 * R + 18) - 6, '700 30px ' + SANS), cx + 2 * R + 18, cy, '700 30px ' + SANS, INK);
         if (k < lu[sd].length - 1) { x.fillStyle = '#e6e3de'; x.fillRect(cx, cy + ROW / 2, colW, 2); }
       });
       if (!lu[sd].length) txt('No players picked', cx, y + 40, '400 26px ' + SANS, MUTED);

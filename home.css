@@ -1,0 +1,81 @@
+/* Homepage only (built by scripts/build-home.mjs). Tokens come from /tokens.css; type scale and page width from assets/issue.css. Phone first. */
+.hp{padding-bottom:var(--s7)}
+
+/* 1. hero: the newest cover full-bleed under a dark scrim, the headline in full on top */
+.hp-hero{position:relative;isolation:isolate;display:flex;align-items:flex-end;min-height:min(88svh,760px);background:var(--ink);color:var(--on-ink)}
+.hp-hero-img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;max-width:none;object-fit:cover}
+.hp-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--hero-scrim)}
+.hp-hero-txt{width:100%;max-width:var(--page);margin:0 auto;padding:var(--s7) var(--gutter) var(--s5)}
+.hp-eyebrow{display:inline-block;padding:var(--half) var(--s1);background:var(--ink);font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink)} /* on a black tag: readable over any photo */
+.hp-hero h1{margin-top:var(--s2);max-width:14ch;font-family:var(--font-head);font-weight:900;font-size:var(--t-display);line-height:.95;letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:break-word;text-wrap:balance}
+.hp-btn{display:inline-flex;align-items:center;min-height:48px;margin-top:var(--s3);padding:0 var(--s3);border-radius:var(--r-btn);background:var(--wb);color:var(--ink);font-size:16px;font-weight:500;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.hp-btn:active{background:var(--on-ink)}
+
+/* section frame */
+.hp-sec{max-width:var(--page);margin:var(--s7) auto 0;padding:0 var(--gutter)}
+.hp-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s2);padding-top:var(--s2);border-top:4px solid var(--ink)}
+.hp-head h2{font-family:var(--font-head);font-weight:700;font-size:var(--t-h2);line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
+.hp-head a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:500;color:var(--wb-text);text-decoration:none}
+
+/* 2. squad strip: 3:4 cut-out cards on the squad's black, swiped sideways */
+.hp-strip{list-style:none;display:flex;gap:var(--s1h);margin:var(--s3) calc(var(--gutter) * -1) 0;padding:0 var(--gutter) var(--s1);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding-left:var(--gutter)}
+.hp-strip li{flex:none;width:min(40vw,176px);scroll-snap-align:start}
+.hp-player{position:relative;isolation:isolate;display:flex;align-items:flex-end;aspect-ratio:3/4;overflow:hidden;background:var(--black);border-bottom:3px solid var(--wb);color:var(--on-ink);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.hp-player picture{display:contents}
+.hp-player img{position:absolute;z-index:-2;left:0;bottom:0;width:100%;height:100%;max-width:none;object-fit:contain;object-position:50% 100%}
+.hp-player::after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;height:45%;background:linear-gradient(to top,var(--black),transparent)}
+.hp-player span{padding:var(--s1h);font-family:var(--font-head);font-weight:700;font-size:18px;line-height:.95;letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:anywhere}
+.hp-player:active{opacity:.85}
+
+/* 3. last result: its space is held before /api/match answers, so nothing below it moves */
+.hp-result-box{min-height:220px;margin-top:var(--s3)}
+.hp-empty{padding:var(--s3);background:var(--surface);font-size:16px;color:var(--muted)}
+.hp-date{font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hp-score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:var(--s2);margin-top:var(--s1h);padding:var(--s3) var(--s2);background:var(--ink);color:var(--on-ink)}
+.hp-score span{font-family:var(--font-head);font-weight:700;font-size:18px;line-height:.95;text-transform:uppercase;overflow-wrap:anywhere}
+.hp-score span:last-child{text-align:right}
+.hp-score b{font-family:var(--font-head);font-weight:900;font-size:48px;line-height:1;font-variant-numeric:tabular-nums}
+.hp-games{margin-top:var(--s1);font-size:14px;color:var(--muted)}
+.hp-lineups{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);margin-top:var(--s3)}
+.hp-lineups h3{padding-bottom:var(--s1);border-bottom:2px solid var(--ink);font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
+.hp-lineups ul{list-style:none}
+.hp-lineups li{padding:var(--s1) 0;border-bottom:1px solid var(--border);font-size:15px;overflow-wrap:anywhere}
+
+/* 4. videos (only when data/videos.json lists any) */
+.hp-videos{display:flex;gap:var(--s2);margin:var(--s3) calc(var(--gutter) * -1) 0;padding:0 var(--gutter);overflow-x:auto;scroll-snap-type:x mandatory}
+.hp-video{flex:none;width:min(72vw,280px);margin:0;scroll-snap-align:start}
+.hp-video video{display:block;width:100%;aspect-ratio:9/16;object-fit:contain;background:var(--ink)}
+.hp-video figcaption{margin-top:var(--s1);font-size:13px;color:var(--muted)}
+.hp-video figcaption b{display:block;font-family:var(--font-head);font-weight:700;font-size:18px;color:var(--ink)}
+
+/* 5. earlier issues: stacked text cards */
+.hp-issues{list-style:none;display:grid;gap:var(--s1h);margin-top:var(--s3)}
+.hp-issue{display:block;padding:var(--s2);background:var(--surface);color:var(--ink);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.hp-issue:active{background:var(--border)}
+.hp-issue-meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hp-tag{padding:2px var(--s1);border-radius:var(--r-chip);background:var(--ink);color:var(--on-ink)}
+.hp-issue h3{margin-top:var(--s1);font-family:var(--font-head);font-weight:700;font-size:var(--t-h3);line-height:.95;letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:break-word}
+.hp-issue p{margin-top:var(--s1);font-size:15px;line-height:1.45;color:var(--ink-hover)}
+
+/* 6. footer: the shared one, inside the page width */
+.hp .foot{max-width:var(--page);width:auto;margin:var(--s7) auto 0;padding:var(--s3) var(--gutter) 0}
+
+@media (hover:hover) and (pointer:fine){
+  .hp-btn:hover{background:var(--on-ink)}
+  .hp-head a:hover,.hp-issue:hover h3{text-decoration:underline}
+  .hp-issue:hover{background:var(--border)}
+}
+@media (min-width:701px){
+  .hp-strip li{width:200px}
+  .hp-issues{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hp-lineups{gap:var(--s4)}
+}
+@media (min-width:901px){
+  .hp-hero{min-height:min(80vh,720px)}
+  .hp-hero-txt{padding:var(--s10) var(--s3) var(--s7)}
+  .hp-sec,.hp .foot{padding-left:var(--s3);padding-right:var(--s3)}
+  .hp-strip{margin-left:0;margin-right:0;padding-left:0;padding-right:0}
+  .hp-issues{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .hp-result-box{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s5);align-items:start}
+  .hp-lineups{margin-top:var(--s1h)}
+}

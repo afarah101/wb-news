@@ -18,6 +18,17 @@ Read this before any edit. Where another doc in this repo says something differe
 7. **Before any pull request:** `npm run build` passes, no "undefined", "null" or "NaN" shows on any page, and no page scrolls sideways at 375px.
 8. Player names: data/players.json is the source of truth. In any new or edited content (issues, fun facts, captions, titles, alt text), automatically change any name that clearly matches a profile to the exact profile name, and highlight it orange. If a name could match more than one player, or matches none, do not guess: list it for Ahmed before opening a PR.
 
+## Brand
+
+Tokens live only in `/tokens.css`, linked first on every page. Never write a raw colour, font or radius anywhere else; add a token.
+
+- **Colours (Swoosh Bold, club orange kept):** `--ink` #111111 text and black panels; `--ink-hover` #292929; `--muted` #707072 secondary text; `--bg` #FFFFFF; `--surface` #F5F5F5 grey panels; `--border` #E5E5E5; `--wb` #F26B1D club orange for fills, the crest and highlights on dark only, never small text on white (3.05:1); `--wb-text` #B4470C orange text on light (5.46:1), used by the name highlight `.n`; `--success` #128A09; `--error` #D43F21. Supporting tokens in the same file: `--on-ink`, `--on-ink-2`, `--ink-rule`, `--black`, `--success-bg`, `--error-bg`, `--whatsapp`, scrims, shadows, tints, `--mask`.
+- **Fonts:** Jost 700/900 (`--font-head`) for headlines: uppercase, letter-spacing -0.02em, line-height 0.95. Card titles, story rows and figures use Jost 700 in normal case. Inter 400/500 (`--font-body`) for everything else; bold text in body copy is 500. Loaded from Google Fonts with preconnect and `display=swap`.
+- **Spacing:** the 4px scale 4, 8, 12, 16, 24, 32, 48, 64, 96 (`--half`, `--s1`, `--s1h`, `--s2`, `--s3`, `--s4`, `--s5`/`--s6`, `--s7`/`--s8`, `--s10`).
+- **Radius:** 0 for images and the hero; `--r-chip` 8px for inputs and chips; `--r-btn` 30px for buttons.
+- **Contrast:** body text at least 4.5:1, large text at least 3:1. Text over photos sits on a black tag or a scrim and is measured on the rendered page.
+- **Homepage** (`scripts/build-home.mjs`, `home.css`, `home.js`): hero (newest cover), squad strip (`data/players.json`), last result (`/api/match`, "No result yet" when there is none), latest videos (`data/videos.json`, hidden when empty), earlier issues, footer.
+
 ## Rules already in NEW-ISSUE.md
 
 - `issues.json` is the only list of issues. The menu, Previous / Next, the homepage and the link-preview image are all built from it.

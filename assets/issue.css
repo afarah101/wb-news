@@ -307,7 +307,7 @@
   .home h1{font-family:var(--serif);font-weight:700;font-size:40px;line-height:1.04;letter-spacing:-.025em;margin-top:var(--s2);overflow-wrap:anywhere}
   .home-row{margin-top:var(--s7)}
   .home-row h2{padding-top:var(--s2);border-top:4px solid var(--ink);font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase}
-  .home .foot{width:auto;margin-top:var(--s7);padding:var(--s3) 0 0}
+  .home .foot,.sq .foot,.mc .foot{width:auto;margin-top:var(--s7);padding:var(--s3) 0 0} /* the squad and Match Centre footers also sit inside the page container: full width, with a gap above the rule */
 
   /* ---------- video: native player; .reel is the homepage Watch row (sideways swipe with snap) ---------- */
   .clip{width:min(100%,360px)}

@@ -3,6 +3,8 @@
    { v, players: {id: {name, nickname, photoV}}, weeks: {"YYYY-MM-DD": {fee, teams, squad, paid, games}} }.
    A night also has target (first to N goals, default 3). Each game is {a, b, status, goals}; goals lists every goal with the team, the scorer ('og' for an own goal) and the assist.
    Everyone can read; changes need the admin PIN (the ADMIN_PIN setting in Vercel).
+   Changes are small steps worked out by match/ops.js (shared with the server): the page shows them straight away, keeps them on
+   the phone until the server confirms them, and keeps retrying if the connection drops.
    Viewers poll for changes: every 3 s while a game is live, every 15 s otherwise, never while the tab is hidden. */
 (function () {
   'use strict';
@@ -21,8 +23,9 @@
   var S = {
     state: 'loading', v: 0, data: { players: {}, weeks: {} }, squad: [],
     players: new Map(), weeks: [], stats: {},
+    server: null, pending: [], saveErr: null,
     pin: null, admin: false, offline: false,
-    view: 'tonight', weekId: null, gameIdx: null, picking: false, pickQuery: ''
+    view: 'tonight', weekId: null, gameK: null, picking: false, pickQuery: ''
   };
   try { S.pin = localStorage.getItem(PIN_KEY); S.admin = !!S.pin; } catch (e) {}
 
@@ -41,6 +44,7 @@
     return { name: nm, color: okColor(t.color) || DEF_TEAMS[side].color };
   }
   function pName(p) { return p ? (p.nickname || p.name || 'Player') : 'Former player'; }
+  function nameFromId(id) { return /^x-/.test(id) ? 'Former player' : String(id).split('-').map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' '); }
   function initials(p) { var n = (p && (p.nickname || p.name)) || '?'; return n.trim().split(/\s+/).slice(0, 2).map(function (x) { return x[0]; }).join('').toUpperCase(); }
   function avatar(p, cls) {
     return p && p.photo
@@ -48,47 +52,38 @@
       : '<span class="av ' + cls + '" aria-hidden="true">' + esc(initials(p)) + '</span>';
   }
   function byName(a, b) { return pName(a).localeCompare(pName(b)); }
-  function games(w) { return Array.isArray(w.games) ? w.games : []; }
+  /* A night from before yesterday is over: a game left live counts as finished, and an empty game left at the end is hidden. */
+  function isStale(w) { var d = new Date(); d.setDate(d.getDate() - 1); return w.id < isoLocal(d); }
+  function games(w) {
+    var gs = Array.isArray(w.games) ? w.games : [];
+    if (!isStale(w)) return gs;
+    return gs.filter(function (g) { return g.status === 'ft' || !WBOps.isEmpty(g); }).map(function (g) { return g.status === 'live' ? Object.assign({}, g, { status: 'ft' }) : g; });
+  }
   function currentWeek() { return S.weeks.find(function (w) { return w.id === S.weekId; }) || S.weeks[0] || null; }
-  function gameIndex(w) {
-    var gs = games(w), i = S.gameIdx;
-    if (i == null || i >= gs.length) { i = gs.findIndex(function (g) { return g.status === 'live'; }); if (i < 0) i = gs.length - 1; }
+  function gameIndex(w) { // the game being shown: the one picked, else the live one, else the last
+    var gs = games(w), i = S.gameK ? gs.findIndex(function (g) { return g.k === S.gameK; }) : -1;
+    if (i < 0) { i = gs.findIndex(function (g) { return g.status === 'live'; }); if (i < 0) i = gs.length - 1; }
     return i;
   }
-  /* Goals: game.goals = [{ s: 'A'|'B', by: player id | 'og' | '', as: player id | '' }].
-     Games scored before goals were recorded only have a number, so the gap shows as goals still to credit (idx -1). */
+  /* Goals: game.goals = [{ k, s: 'A'|'B', by: player id | 'og' | '', as: player id | '' }].
+     Games scored before goals were recorded only have a number, so the gap shows as goals still to credit (legacy). */
   function goalList(g) {
-    var gl = (Array.isArray(g.goals) ? g.goals : []).map(function (x, i) { return { s: x.s === 'B' ? 'B' : 'A', by: x.by || '', as: x.as || '', idx: i }; });
+    var gl = (Array.isArray(g.goals) ? g.goals : []).map(function (x) { return { s: x.s === 'B' ? 'B' : 'A', by: x.by || '', as: x.as || '', k: x.k }; });
     ['A', 'B'].forEach(function (s) {
       var extra = (+g[s === 'A' ? 'a' : 'b'] || 0) - gl.filter(function (x) { return x.s === s; }).length;
-      for (var k = 0; k < extra; k++) gl.push({ s: s, by: '', as: '', idx: -1 });
+      for (var k = 0; k < extra; k++) gl.push({ s: s, by: '', as: '', k: '', legacy: true });
     });
     return gl;
   }
-  /* First to N: when a team reaches the night's target the game ends and the next one kicks off by itself. 0 = play on until Full time. */
-  var MAX_GAMES = 30;
-  function targetOf(w) { return w.target == null ? 3 : Math.max(0, Math.min(20, Math.round(+w.target) || 0)); }
-  function maybeWin(x, gi) { // after a new goal: returns the new game's index, or -1
-    var g = x.games[gi], t = targetOf(x);
-    if (!t || g.status === 'ft' || Math.max(+g.a || 0, +g.b || 0) < t) return -1;
-    g.status = 'ft';
-    if (x.games.length >= MAX_GAMES) return -1;
-    x.games.push({ a: 0, b: 0, status: 'live', goals: [] });
-    return x.games.length - 1;
-  }
-  function undoWin(x, gi, before) { // after a goal comes off: if that undid the win, reopen the game and drop the empty game that followed it
-    var g = x.games[gi], t = targetOf(x);
-    if (!t || g.status !== 'ft' || before < t || Math.max(+g.a || 0, +g.b || 0) >= t) return false;
-    g.status = 'live';
-    var nx = x.games[gi + 1];
-    if (nx && gi + 1 === x.games.length - 1 && !(+nx.a) && !(+nx.b) && !(nx.goals || []).length) x.games.splice(gi + 1, 1);
-    return true;
-  }
-  /* The night goes to the team that wins the most games. Only finished games count; a drawn game counts for neither. */
+  /* First to N (worked out in ops.js): when a team reaches the night's target the game ends and the next one kicks off by itself. */
+  var MAX_GAMES = WBOps.MAX_GAMES;
+  function targetOf(w) { return WBOps.targetOf(w); }
+  /* The night goes to the team that wins the most games. Only finished games count; a drawn game counts for neither.
+     The night carries on (a team "leads", it hasn't "won") until an admin taps End night, or the night is in the past. */
   function nightResult(w) {
     var r = { A: 0, B: 0, played: 0, winner: null, open: false };
     games(w).forEach(function (g) {
-      if (g.status !== 'ft') { if (g.status === 'live' && ((+g.a || 0) + (+g.b || 0) > 0)) r.open = true; return; }
+      if (g.status !== 'ft') { r.open = true; return; }
       r.played++;
       if ((+g.a || 0) > (+g.b || 0)) r.A++; else if ((+g.b || 0) > (+g.a || 0)) r.B++;
     });
@@ -101,7 +96,7 @@
     var t = nr.winner === 'A' ? A : B, hi = Math.max(nr.A, nr.B), lo = Math.min(nr.A, nr.B);
     return t.name + (verbs ? ' lead ' : ' win the night ') + hi + '–' + lo + ' on games';
   }
-  function scorerName(id) { return id === 'og' ? 'Own goal' : pName(S.players.get(id)); }
+  function scorerName(id) { return id === 'og' ? 'Own goal' : S.players.has(id) ? pName(S.players.get(id)) : nameFromId(id); }
   function nightTotals(w) { // { goals: {pid: n}, assists: {pid: n}, open: goals still without a scorer }
     var t = { goals: {}, assists: {}, open: 0 };
     games(w).forEach(function (g) {
@@ -131,9 +126,19 @@
       var p = S.data.players[id];
       players.set(id, { id: id, name: p.name, nickname: p.nickname || '', photo: p.photoV ? new URL('api/photo?id=' + encodeURIComponent(id) + '&v=' + p.photoV, root).href : null, own: true });
     });
+    // Players who've been deleted, or taken off the Squad page, keep their name so their goals and nights still show.
+    Object.keys(S.data.formers || {}).forEach(function (id) {
+      var f = S.data.formers[id];
+      if (!players.has(id)) players.set(id, { id: id, name: f.name, nickname: f.nickname || '', photo: null, own: true, former: true });
+    });
+    Object.keys(S.data.weeks || {}).forEach(function (wid) {
+      var w = S.data.weeks[wid], ids = Object.keys(w.squad || {});
+      (w.games || []).forEach(function (g) { (g.goals || []).forEach(function (x) { if (x.by && x.by !== 'og') ids.push(x.by); if (x.as) ids.push(x.as); }); });
+      ids.forEach(function (id) { if (!players.has(id)) players.set(id, { id: id, name: nameFromId(id), nickname: '', photo: null, own: true, former: true }); });
+    });
     S.players = players;
     S.weeks = Object.keys(S.data.weeks || {}).filter(function (id) { return /^\d{4}-\d{2}-\d{2}$/.test(id); })
-      .map(function (id) { var w = S.data.weeks[id]; w.id = id; return w; })
+      .map(function (id) { var w = WBOps.normalizeWeek(S.data.weeks[id], id); return w; })
       .sort(function (a, b) { return b.id.localeCompare(a.id); });
     computeStats();
   }
@@ -167,34 +172,83 @@
     return f.length ? '<span class="form" aria-label="Last ' + f.length + ': ' + f.join(' ') + '">' + f.map(function (r) { return '<i class="' + r + '">' + r + '</i>'; }).join('') + '</span>' : '<span class="muted">—</span>';
   }
 
-  /* ---------- server ---------- */
-  var queue = [], sending = false, pollT = null;
-  function busy() { return sending || queue.length > 0; }
-
-  function send(op) {
-    if (op.op === 'putWeek') queue = queue.filter(function (q) { return !(q.op === 'putWeek' && q.week.id === op.week.id); });
-    queue.push(op);
-    if (!sending) flush();
+  /* ---------- saving ----------
+     Each change goes into a queue kept on this phone (so nothing's lost if the page closes or the signal drops) and is
+     sent to the server, which applies it to the latest data. What you see is the server's data with your waiting changes
+     on top. If sending fails, it keeps retrying and says so at the top of the page. */
+  var PENDING_KEY = 'wb-match-pending', CACHE_KEY = 'wb-match-cache', sending = false, pollT = null, retryT = null, retryDelay = 2000;
+  function loadPending() {
+    try { var p = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); return Array.isArray(p) ? p.filter(function (o) { return o && o.id && o.t; }) : []; }
+    catch (e) { return []; }
+  }
+  function savePending() { try { localStorage.setItem(PENDING_KEY, JSON.stringify(S.pending)); } catch (e) {} }
+  function recompute() {
+    var d = clone(S.server || { players: {}, weeks: {} });
+    d.weeks = d.weeks || {};
+    Object.keys(d.weeks).forEach(function (id) { WBOps.normalizeWeek(d.weeks[id], id); });
+    S.pending.forEach(function (op) { try { WBOps.apply(d, op); } catch (e) {} });
+    S.data = d;
+    rebuild();
+    var live = anyLive(); // a game has just gone live: check for other admins' changes every 3 seconds from now, not in 15
+    if (live && !S.wasLive && S.state === 'ready') { clearTimeout(pollT); pollT = setTimeout(poll, 3000); }
+    S.wasLive = live;
+  }
+  function act(ops) { // make changes: shown straight away, saved in the background. Returns what the last one did.
+    var res = { ok: false }, trial = clone(S.data);
+    ops.forEach(function (op) {
+      op.id = WBOps.uid() + WBOps.uid().slice(-6);
+      res = WBOps.apply(trial, op);
+      if (res.ok) S.pending.push(op);
+    });
+    savePending(); recompute(); render(); flush();
+    return res;
+  }
+  function mergeServer(j) {
+    if (!j || (j.v != null && S.server && j.v < S.v)) return false; // an older answer that arrived late
+    if (j.data) S.server = j.data;
+    else if (j.delta) {
+      S.server = S.server || { players: {}, weeks: {} };
+      S.server.weeks = S.server.weeks || {};
+      Object.keys(j.delta.weeks || {}).forEach(function (id) { S.server.weeks[id] = j.delta.weeks[id]; });
+      if (j.delta.players) S.server.players = j.delta.players;
+      if (j.delta.formers) S.server.formers = j.delta.formers;
+    }
+    if (j.v != null) S.v = j.v;
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ v: S.v, data: S.server })); } catch (e) {} // so the page opens with no signal
+    return true;
   }
   async function flush() {
-    sending = true;
-    while (queue.length) {
-      var op = queue.shift();
-      try {
-        var j = await post(op);
-        if (!queue.length) { S.v = j.v; S.data = j.data; rebuild(); render(); }
-      } catch (e) {
-        if (e.status === 401) { signOut(); toast('The admin PIN has changed. Sign in again.'); queue = []; }
-        else toast(e.message || 'Couldn\'t save just now. Check your connection and try again.');
-        poll(true);
-      }
+    if (sending || !S.pending.length || !S.admin) return;
+    sending = true; clearTimeout(retryT);
+    var batch = S.pending.slice(0, 25), again = false;
+    try {
+      var j = await post({ op: 'apply', ops: batch, since: S.v });
+      var answered = {}, failed = [];
+      (j.results || []).forEach(function (r) { answered[r.id] = 1; if (!r.ok && !r.dup) failed.push(r); });
+      S.pending = S.pending.filter(function (op) { return !answered[op.id]; });
+      savePending(); mergeServer(j);
+      S.saveErr = null; retryDelay = 2000; again = S.pending.length > 0;
+      if (failed.length) toast(failed.some(function (r) { return r.why === 'gone' || r.why === 'no-game' || r.why === 'no-night'; })
+        ? 'Someone else changed that first, so one of your changes wasn\'t made. The page shows the latest now.'
+        : 'One change couldn\'t be made. The page shows the latest now.');
+    } catch (e) {
+      if (e.status === 401) { S.saveErr = 'signin'; signOut(); }
+      else if (e.status === 400) { // the server can't use these: drop them rather than retry forever
+        S.pending = S.pending.filter(function (op) { return batch.indexOf(op) < 0; }); savePending();
+        toast('A change couldn\'t be saved, so the page shows the latest now.'); again = S.pending.length > 0;
+      } else { S.saveErr = 'retry'; retryT = setTimeout(flush, retryDelay); retryDelay = Math.min(retryDelay * 2, 30000); }
     }
     sending = false;
+    recompute(); render();
+    if (again) flush();
   }
   async function post(body, pin) {
     var r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-pin': pin || S.pin || '' }, body: JSON.stringify(body) });
     var j = {}; try { j = await r.json(); } catch (e) {}
-    if (!r.ok) { var err = new Error(r.status === 400 && j.error ? j.error : r.status === 503 ? 'The Match Centre database isn\'t set up yet.' : ''); err.status = r.status; throw err; }
+    if (!r.ok) {
+      var msg = (r.status === 400 || r.status === 429) && j.error ? j.error : r.status === 503 && j.error === 'not_configured' ? 'The Match Centre database isn\'t set up yet.' : '';
+      var err = new Error(msg); err.status = r.status; throw err;
+    }
     return j;
   }
   async function poll(force) {
@@ -202,38 +256,46 @@
     if (document.hidden && !force) return;
     try {
       var r = await fetch(API + '?v=' + (force ? 0 : S.v), { cache: 'no-store' });
-      if (r.status === 503) { S.state = 'setup'; render(); return; }
+      if (r.status === 503) { var e5 = {}; try { e5 = await r.json(); } catch (x) {} if (e5.error === 'not_configured') { S.state = 'setup'; render(); return; } throw new Error(503); }
       if (!r.ok) throw new Error(r.status);
       var j = await r.json();
       var was = S.state, wasOff = S.offline;
       S.offline = false; S.state = 'ready';
-      if (!j.same && !busy()) { S.v = j.v; S.data = j.data || { players: {}, weeks: {} }; rebuild(); render(); }
+      if (!j.same && mergeServer(j)) { recompute(); render(); }
       else if (was !== 'ready' || wasOff) render();
+      if (S.pending.length && S.saveErr === 'retry' && !sending) { retryDelay = 2000; flush(); } // back online: send what's waiting
     } catch (e) {
       if (!S.offline) { S.offline = true; render(); }
     }
     pollT = setTimeout(poll, anyLive() ? 3000 : 15000);
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+  window.addEventListener('online', function () { retryDelay = 2000; flush(); poll(); });
 
-  function mutateWeek(wid, fn) {
-    var w = S.data.weeks[wid]; if (!w) return;
-    var copy = clone(w); copy.id = wid; fn(copy);
-    S.data.weeks[wid] = copy;
-    rebuild(); render();
-    send({ op: 'putWeek', week: copy });
-  }
   function signOut() { S.pin = null; S.admin = false; S.picking = false; try { localStorage.removeItem(PIN_KEY); } catch (e) {} render(); }
 
   /* ---------- render ---------- */
   function render() {
+    // keep the cursor where it was if someone's typing (the page refreshes every few seconds during a game)
+    var ae = document.activeElement, keepId = ae && ae.id && ae.closest && ae.closest('.mc-view') ? ae.id : null, sel = null;
+    if (keepId) { try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { sel = null; } }
     document.querySelectorAll('.mc-tabs a').forEach(function (a) {
       if (a.dataset.view === S.view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     document.querySelectorAll('.mc-view').forEach(function (v) { v.classList.toggle('on', v.id === 'view-' + S.view); });
     $('#adminBtn').textContent = S.admin ? 'Sign out of admin' : 'Admin sign in';
-    $('#mc-banner').innerHTML = S.offline && S.state === 'ready' ? '<div class="notice">Can\'t reach the Match Centre right now, so scores may be out of date. It keeps trying.</div>' : '';
+    $('#backupsBtn').hidden = !S.admin;
+    var n = S.pending.length, waiting = n + ' change' + (n === 1 ? '' : 's');
+    $('#mc-banner').innerHTML =
+      (n && (S.saveErr || !S.admin) ? '<div class="notice save-warn"><b>' + waiting + ' not saved yet.</b> ' +
+        (!S.admin || S.saveErr === 'signin' ? 'Sign in as admin again to save ' + (n === 1 ? 'it' : 'them') + '. ' + (n === 1 ? 'It\'s' : 'They\'re') + ' kept on this phone until then.'
+          : 'No connection to the Match Centre. ' + (n === 1 ? 'It\'s' : 'They\'re') + ' kept on this phone and will be sent as soon as it\'s back. <button class="btn sm" data-action="retry-now">Try now</button>') + '</div>' : '') +
+      (S.offline && S.state === 'ready' && !(n && S.saveErr === 'retry') ? '<div class="notice">Can\'t reach the Match Centre right now, so scores may be out of date. It keeps trying.</div>' : '');
     ({ tonight: renderTonight, table: renderTable, players: renderPlayers, history: renderHistory })[S.view]();
+    if (keepId) {
+      var el = document.getElementById(keepId);
+      if (el && el !== document.activeElement) { el.focus(); if (sel) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+    }
   }
   function gate(el) {
     if (S.state === 'setup') {
@@ -270,7 +332,7 @@
     var A = teamOf(w, 'A'), B = teamOf(w, 'B');
     function sq(side) {
       return Object.keys(w.squad || {}).filter(function (pid) { return w.squad[pid] === side && S.players.has(pid); })
-        .map(function (pid) { return S.players.get(pid); }).sort(byName);
+        .map(function (pid) { return S.players.get(pid); }).sort(byName); // former players are in S.players too
     }
     var sA = sq('A'), sB = sq('B'), fee = +w.fee || 0;
     var total = sA.length + sB.length;
@@ -287,7 +349,7 @@
     if (g) {
       var label = g.status === 'live' ? 'Live' : g.status === 'ft' ? 'Full time' : 'Not started';
       var chips = (gs.length > 1 || S.admin) ? gs.map(function (x, i) {
-        return '<button class="chip num" data-action="pick-game" data-i="' + i + '" aria-pressed="' + (i === gi) + '">Game ' + (i + 1) + ' · ' +
+        return '<button class="chip num" data-action="pick-game" data-k="' + esc(x.k) + '" aria-pressed="' + (i === gi) + '">Game ' + (i + 1) + ' · ' +
           (x.status === 'live' ? 'LIVE ' : x.status === 'ft' ? 'FT ' : '') + (+x.a || 0) + '–' + (+x.b || 0) + '</button>';
       }).join('') : '';
       var admin = S.admin ? (
@@ -300,7 +362,8 @@
         '<div class="mc-score">' + side('A', A, +g.a || 0) + '<span class="dash">–</span>' + side('B', B, +g.b || 0) + '</div>' +
         scorersHtml(g) +
         (nightNow.played ? '<div class="nightbar"><span class="label">' + (nightNow.open ? 'Tonight so far' : 'Tonight') + '</span><b>' + esc(nightLine(w, nightNow, nightNow.open)) + '</b>' +
-          (S.admin && !nightNow.open ? '<span class="spacer"></span><button class="btn sm wa" data-action="share-wa">Send result to WhatsApp</button>' : '') + '</div>' : '') +
+          (S.admin ? '<span class="spacer"></span>' + (gs.some(function (x) { return x.status !== 'ft'; }) ? '<button class="btn sm" data-action="end-night">End night</button>' : '') +
+            (!nightNow.open ? '<button class="btn sm wa" data-action="share-wa">Send result to WhatsApp</button>' : '') : '') + '</div>' : '') +
         (chips || admin ? '<div class="board-foot">' + chips + (chips && admin ? '<span class="spacer"></span>' : '') + admin + '</div>' : '') + '</div>';
     } else {
       board = '<div class="board"><div class="board-empty">' + (S.admin ? '<button class="btn sm wb" data-action="add-game">Add a game</button>' : 'No game set up for this night yet.') + '</div></div>';
@@ -319,7 +382,7 @@
         return '<ul class="scorers-col">' + gl.filter(function (x) { return x.s === s; }).map(function (x) {
           var who = x.by ? esc(scorerName(x.by)) : '<span class="tbc">' + (S.admin ? 'Add scorer' : 'Scorer to come') + '</span>';
           var inner = '<span class="who">' + who + (S.admin && x.by ? '<span class="edit-tag" aria-hidden="true">Edit</span>' : '') + '</span>' + (x.as ? '<span class="ast">Assist: ' + esc(scorerName(x.as)) + '</span>' : '');
-          return '<li>' + (S.admin ? '<button class="goal-btn" data-action="edit-goal" data-i="' + x.idx + '" data-side="' + s + '">' + inner + '</button>' : inner) + '</li>';
+          return '<li>' + (S.admin ? '<button class="goal-btn" data-action="edit-goal" data-k="' + esc(x.k || '') + '" data-side="' + s + '">' + inner + '</button>' : inner) + '</li>';
         }).join('') + '</ul>';
       }
       var credited = gl.length - open;
@@ -344,7 +407,7 @@
 
   function pickerHtml(w, A, B, nA, nB) {
     var q = S.pickQuery.trim().toLowerCase(), squad = w.squad || {};
-    var list = Array.from(S.players.values()).sort(byName).filter(function (p) { return !q || ((p.name || '') + ' ' + (p.nickname || '')).toLowerCase().indexOf(q) >= 0; });
+    var list = Array.from(S.players.values()).filter(function (p) { return !p.former; }).sort(byName).filter(function (p) { return !q || ((p.name || '') + ' ' + (p.nickname || '')).toLowerCase().indexOf(q) >= 0; });
     return '<div class="picker"><div class="row"><span class="label">Pick teams</span><span class="spacer"></span>' +
       '<b class="num"><span style="color:' + A.color + '">' + esc(A.name) + ' ' + nA + '</span> v <span style="color:' + B.color + '">' + nB + ' ' + esc(B.name) + '</span></b></div>' +
       '<div class="row" style="margin-top:12px;flex-wrap:nowrap"><input type="search" id="pickSearch" placeholder="Find a player" aria-label="Find a player" value="' + esc(S.pickQuery) + '">' +
@@ -362,6 +425,7 @@
     var el = $('#view-table');
     if (!gate(el)) return;
     var rows = Array.from(S.players.values()).map(function (p) { return { p: p, s: S.stats[p.id] }; })
+      .filter(function (r) { return !r.p.former || r.s.p || r.s.g || r.s.a || r.s.owed; })
       .sort(function (a, b) { return b.s.pts - a.s.pts || b.s.pct - a.s.pct || b.s.p - a.s.p || byName(a.p, b.p); });
     var done = S.weeks.filter(function (w) { return nightResult(w).played; }).length;
     function leaders(key, title, unit) {
@@ -386,7 +450,7 @@
   function renderPlayers() {
     var el = $('#view-players');
     if (!gate(el)) return;
-    var list = Array.from(S.players.values()).sort(byName);
+    var list = Array.from(S.players.values()).filter(function (p) { return !p.former; }).sort(byName);
     var owed = list.reduce(function (n, p) { return n + S.stats[p.id].owed; }, 0);
     el.innerHTML = '<div class="row"><span class="label">' + list.length + ' players' + (owed ? ' · ' + money(owed) + ' owed in total' : '') + '</span><span class="spacer"></span>' +
       (S.admin ? '<button class="btn primary" data-action="add-player">Add player</button>' : '') + '</div>' +
@@ -459,8 +523,8 @@
       '<div><div class="row"><span class="label">Subs</span><span class="spacer"></span>' + (s.owed ? '<span class="pay owes">Owes ' + money(s.owed) + '</span>' : '<span class="pay paid">All paid</span>') + '</div>' +
       (unpaid ? '<ul class="log" style="margin-top:8px">' + unpaid + '</ul>' + (S.admin && s.unpaid.length > 1 ? '<button class="btn sm" data-action="pay-all" data-pid="' + esc(pid) + '" style="margin-top:8px">Mark all paid</button>' : '') : '') + '</div>' +
       (log ? '<div><div class="label">Week by week</div><ul class="log" style="margin-top:8px">' + log + '</ul></div>' : '') +
-      '<div class="row">' + (S.admin && p.own ? '<button class="btn" data-action="edit-player" data-pid="' + esc(pid) + '">Edit profile</button>' : '') +
-      (!p.own ? '<a class="mc-link" href="../squad/#' + encodeURIComponent(pid) + '">Squad profile</a>' : '') +
+      '<div class="row">' + (S.admin && p.own && !p.former ? '<button class="btn" data-action="edit-player" data-pid="' + esc(pid) + '">Edit profile</button>' : '') + (p.former ? '<span class="muted" style="font-size:14px">No longer in the squad</span>' : '') +
+      (!p.own && !p.former ? '<a class="mc-link" href="../squad/#' + encodeURIComponent(pid) + '">Squad profile</a>' : '') +
       '<span class="spacer"></span><button class="btn" data-action="close">Close</button></div>', pName(p));
   }
 
@@ -504,28 +568,34 @@
   }
 
   /* Who scored and who assisted. Nothing is saved until both are picked (an own goal needs no assist).
-     S.goal = { wid, gi, idx (index in game.goals, -1 = an older goal still to credit), s, all, fresh (a new goal), by (scorer picked so far) } */
+     S.goal = { wid, gk (game id), k (goal id; '' for a new goal or an older goal with no scorer), s, legacy, fresh, all, menu, by (scorer picked so far) } */
+  function goalTarget() {
+    var G = S.goal, w = G && S.weeks.find(function (x) { return x.id === G.wid; });
+    var gs = w ? games(w) : [], gi = gs.findIndex(function (g) { return g.k === G.gk; }), g = gs[gi];
+    if (!g) return null;
+    var x = G.k ? (g.goals || []).filter(function (y) { return y.k === G.k; })[0] : { s: G.s, by: '', as: '' };
+    return x ? { w: w, g: g, n: gi + 1, x: x } : null;
+  }
   function goalSheet(step) {
-    var G = S.goal, w = G && S.weeks.find(function (x) { return x.id === G.wid; }), g = w && games(w)[G.gi];
-    if (!g) { closeSheet(); return; }
-    var x = G.idx >= 0 ? (g.goals || [])[G.idx] : { s: G.s, by: '', as: '' };
-    if (!x || x.s !== G.s) { closeSheet(); toast('That goal has just changed. Tap it again.'); return; }
-    var t = teamOf(w, G.s), squad = w.squad || {};
+    var G = S.goal, T = goalTarget();
+    if (!T) { closeSheet(); toast('That goal has just changed. Tap it again.'); return; }
+    var w = T.w, x = T.x, t = teamOf(w, G.s), squad = w.squad || {};
     if (step === 'menu') { // a goal that's already in: change the scorer, the assist, or delete it
       G.by = x.by; G.menu = true;
       var row = function (lbl, val, stepTo) {
         return '<li><span class="muted" style="min-width:64px">' + lbl + '</span><b style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(val) + '</b>' +
           (stepTo ? '<button class="btn sm" data-action="goal-step" data-step="' + stepTo + '">Change</button>' : '') + '</li>';
       };
-      openSheet('<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + ' · Game ' + (G.gi + 1) + '</div><h2 style="margin-top:6px">Edit goal</h2></div>' +
+      openSheet('<div><div class="label" style="color:' + t.color + '">Goal for ' + esc(t.name) + ' · Game ' + T.n + '</div><h2 style="margin-top:6px">Edit goal</h2></div>' +
         '<ul class="log">' + row('Scorer', scorerName(x.by), 'by') + (x.by === 'og' ? '' : row('Assist', x.as ? scorerName(x.as) : 'No assist', 'as')) + '</ul>' +
         '<div class="row"><button class="btn danger" data-action="delete-goal">Delete goal</button><span class="spacer"></span><button class="btn" data-action="close">Done</button></div>', 'Edit goal');
       return;
     }
-    var mates = Object.keys(squad).filter(function (pid) { return squad[pid] === G.s && S.players.has(pid); }).map(function (pid) { return S.players.get(pid); });
-    var list = (G.all || !mates.length ? Array.from(S.players.values()) : mates).sort(byName);
+    var current = function (p) { return !p.former; };
+    var mates = Object.keys(squad).filter(function (pid) { return squad[pid] === G.s && S.players.has(pid); }).map(function (pid) { return S.players.get(pid); }).filter(current);
+    var list = (G.all || !mates.length ? Array.from(S.players.values()).filter(current) : mates).sort(byName);
     if (step === 'as') list = list.filter(function (p) { return p.id !== G.by; });
-    var sameScorer = G.idx >= 0 && x.by === G.by;
+    var sameScorer = !!G.k && x.by === G.by;
     var cur = step === 'as' ? (sameScorer ? x.as : null) : G.by;
     function pick(p) {
       return '<li><button class="pick" data-action="goal-' + step + '" data-v="' + esc(p.id) + '" aria-pressed="' + (cur === p.id) + '">' + avatar(p, 'av36') + '<span class="nm">' + esc(pName(p)) + '</span></button></li>';
@@ -542,35 +612,35 @@
         (G.fresh ? '<p class="muted" style="font-size:14px">The goal goes on the scoreboard once you\'ve picked the scorer and the assist.</p>' : '');
     openSheet(html, step === 'as' ? 'Who set it up?' : 'Who scored?');
   }
-  function commitGoal(by, as) { // returns false if the game has gone
-    var G = S.goal, ok = false, next = -1;
-    mutateWeek(G.wid, function (x) {
-      var g = x.games && x.games[G.gi]; if (!g) return;
-      g.goals = Array.isArray(g.goals) ? g.goals : [];
-      var k = G.s === 'A' ? 'a' : 'b', n = +g[k] || 0, e;
-      if (G.idx >= 0) { e = g.goals[G.idx]; if (!e || e.s !== G.s) return; }
-      else { if (G.fresh && n >= 99) return; e = { s: G.s }; if (G.fresh) g.goals.push(e); else g.goals.unshift(e); } // an older goal goes before the newer ones, so − still takes off the latest
-      e.by = by; e.as = by === 'og' ? '' : as;
-      var cnt = g.goals.filter(function (y) { return y.s === G.s; }).length;
-      g[k] = G.fresh ? Math.max(n + 1, cnt) : Math.max(n, cnt);
-      if (G.fresh && (!g.status || g.status === 'upcoming')) g.status = 'live';
-      if (G.fresh) next = maybeWin(x, G.gi);
-      ok = true;
-    });
-    if (next >= 0) {
-      var w = S.weeks.find(function (y) { return y.id === G.wid; }), win = teamOf(w, G.s).name;
-      S.gameIdx = next; render();
-      setTimeout(function () { toast(win + ' win game ' + (G.gi + 1) + '. Game ' + (next + 1) + ' has kicked off.'); }, 50);
+  function commitGoal(by, as) { // returns false if the game or goal has gone
+    var G = S.goal, T = goalTarget(); if (!T) return false;
+    var op = G.fresh ? { t: 'addGoal', wid: G.wid, gk: G.gk, s: G.s, k: WBOps.uid(), by: by, as: as, next: WBOps.uid(), live: T.g.status !== 'ft' }
+      : G.k ? { t: 'editGoal', wid: G.wid, gk: G.gk, k: G.k, by: by, as: as }
+      : { t: 'creditGoal', wid: G.wid, gk: G.gk, s: G.s, k: WBOps.uid(), by: by, as: as };
+    var r = act([op]);
+    if (!r.ok) return false;
+    if (r.won && r.won.next) {
+      var win = teamOf(T.w, G.s).name, n = T.n;
+      S.gameK = r.won.next; render();
+      setTimeout(function () { toast(win + ' win game ' + n + '. Game ' + (n + 1) + ' has kicked off.'); }, 50);
     }
-    return ok;
+    return true;
   }
   function waLink(w) { return 'https://wa.me/?text=' + encodeURIComponent(statsText(w, true)); }
-  /* Line-ups for the night with each player's goals and assists, best first. */
+  /* Line-ups for the night with each player's goals and assists, best first. Goals count for the team they were scored for,
+     so someone who switched teams during the night shows under both with what they did for each. */
   function lineups(w) {
-    var tot = nightTotals(w), squad = w.squad || {};
+    var tot = nightTotals(w), squad = w.squad || {}, per = { A: {}, B: {} };
+    var bump = function (m, id, k) { m[id] = m[id] || { g: 0, a: 0 }; m[id][k]++; };
+    games(w).forEach(function (g) {
+      goalList(g).forEach(function (x) { if (!x.by) return; if (x.by !== 'og') bump(per[x.s], x.by, 'g'); if (x.as) bump(per[x.s], x.as, 'a'); });
+    });
     function side(sd) {
-      return Object.keys(squad).filter(function (pid) { return squad[pid] === sd && S.players.has(pid); }).map(function (pid) {
-        return { p: S.players.get(pid), g: tot.goals[pid] || 0, a: tot.assists[pid] || 0 };
+      var ids = Object.keys(squad).filter(function (pid) { return squad[pid] === sd; });
+      Object.keys(per[sd]).forEach(function (pid) { if (ids.indexOf(pid) < 0) ids.push(pid); });
+      return ids.filter(function (pid) { return S.players.has(pid); }).map(function (pid) {
+        var m = per[sd][pid] || {};
+        return { p: S.players.get(pid), g: m.g || 0, a: m.a || 0 };
       }).sort(function (x, y) { return y.g - x.g || y.a - x.a || byName(x.p, y.p); });
     }
     return { A: side('A'), B: side('B'), tot: tot };
@@ -707,6 +777,25 @@
       '<button class="btn" data-action="copy-stats">Copy text</button><span class="spacer"></span><button class="btn" data-action="close">Close</button>';
   }
 
+  /* Backups: the server keeps a copy every 10 minutes while things change, and before anything is deleted. */
+  function fmtWhen(ts) { return new Date(ts).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+  function niceWhat(s) { return String(s || 'a change').replace(/\(?(\d{4}-\d{2}-\d{2})\)?/g, function (m, d) { return fmtDate(d); }); }
+  async function backupsSheet() {
+    openSheet('<h2>Backups</h2><p class="muted" id="bk-status">Loading…</p><ul class="log" id="bk-list"></ul><div class="row"><span class="spacer"></span><button class="btn" data-action="close">Close</button></div>', 'Backups');
+    var j;
+    try { j = await post({ op: 'backups' }); }
+    catch (e) { if ($('#bk-status')) $('#bk-status').textContent = e.status === 401 ? 'Sign in as admin again to see the backups.' : 'Couldn\'t load the backups. Check your connection and try again.'; return; }
+    if (!$('#bk-list')) return;
+    var list = j.backups || [];
+    $('#bk-status').textContent = list.length
+      ? 'A copy is kept every 10 minutes while things are changing, and before anything is deleted. Going back replaces what\'s there now, but what\'s there now is kept as a backup first, so you can undo it.'
+      : 'No backups yet. The first one is kept the next time something changes.';
+    $('#bk-list').innerHTML = list.map(function (b) {
+      return '<li><span style="flex:1;min-width:0"><b>' + esc(b.at ? fmtWhen(b.at) : 'Earlier') + '</b><br><span class="muted" style="font-size:14px">Just before: ' + esc(niceWhat(b.what)) + '</span></span>' +
+        '<button class="btn sm" data-action="restore" data-i="' + (+b.i || 0) + '">Go back to this</button></li>';
+    }).join('');
+  }
+
   async function fileToPhoto(file) {
     var url = URL.createObjectURL(file);
     try {
@@ -723,8 +812,8 @@
     btn.classList.add('armed'); var old = btn.textContent; btn.textContent = 'Tap again to confirm';
     setTimeout(function () { if (btn.isConnected) { btn.classList.remove('armed'); btn.textContent = old; } }, 3500);
   }
-  async function direct(op, done) {
-    try { var j = await post(op); S.v = j.v; S.data = j.data; rebuild(); render(); if (done) done(); }
+  async function direct(op, done) { // changes that need a connection (deleting, players, backups)
+    try { var j = await post(op); if (mergeServer(j)) { recompute(); render(); } if (done) done(j); }
     catch (e) { if (e.status === 401) { signOut(); toast('Wrong PIN. Sign in again.'); } else toast(e.message || 'Couldn\'t save just now. Try again.'); throw e; }
   }
 
@@ -732,6 +821,7 @@
   document.addEventListener('click', function (e) {
     if (e.target === $('#scrim')) { closeSheet(); return; }
     if (e.target.id === 'adminBtn') { if (S.admin) { signOut(); toast('Signed out of admin'); } else loginForm(); return; }
+    if (e.target.id === 'backupsBtn') { backupsSheet(); return; }
     var t = e.target.closest('[data-action]'); if (!t) return;
     var a = t.dataset.action, w = currentWeek();
     switch (a) {
@@ -747,42 +837,33 @@
         direct({ op: 'deleteWeek', id: id }, function () { if (S.weekId === id) S.weekId = null; closeSheet(); toast('Night deleted'); }).catch(function () {});
       }); break;
       case 'toggle-pick': S.picking = !S.picking; render(); break;
-      case 'squad': if (w) mutateWeek(w.id, function (x) {
-        x.squad = x.squad || {}; x.paid = x.paid || {};
-        if (t.dataset.side) x.squad[t.dataset.pid] = t.dataset.side; else { delete x.squad[t.dataset.pid]; delete x.paid[t.dataset.pid]; }
-      }); break;
+      case 'squad': if (w) act([{ t: 'setSquad', wid: w.id, pid: t.dataset.pid, side: t.dataset.side || '' }]); break;
       case 'toggle-paid': {
-        var pid = t.dataset.pid;
-        mutateWeek(t.dataset.wid, function (x) { x.paid = x.paid || {}; if (x.paid[pid]) delete x.paid[pid]; else x.paid[pid] = true; });
+        var pid = t.dataset.pid, pw = S.weeks.find(function (x) { return x.id === t.dataset.wid; });
+        if (pw) act([{ t: 'setPaid', wid: pw.id, pid: pid, paid: !(pw.paid && pw.paid[pid]) }]);
         if (t.dataset.from === 'sheet') playerSheet(pid);
         break;
       }
       case 'pay-all': {
         var id = t.dataset.pid;
-        S.stats[id].unpaid.slice().forEach(function (wid) { mutateWeek(wid, function (x) { x.paid = x.paid || {}; x.paid[id] = true; }); });
+        act(S.stats[id].unpaid.map(function (wid) { return { t: 'setPaid', wid: wid, pid: id, paid: true }; }));
         playerSheet(id); toast('All nights marked paid'); break;
       }
-      case 'pick-game': S.gameIdx = +t.dataset.i; render(); break;
+      case 'pick-game': S.gameK = t.dataset.k; render(); break;
+      case 'retry-now': retryDelay = 2000; S.saveErr = S.saveErr === 'retry' ? 'retry' : S.saveErr; flush(); poll(true); break;
       case 'score': if (w) {
         // + asks who scored and who assisted, and only then adds the goal; − takes off that team's most recent goal.
-        var gi = gameIndex(w), sd = t.dataset.side, removed = null;
-        if (+t.dataset.d > 0) { S.goal = { wid: w.id, gi: gi, idx: -1, s: sd, all: false, fresh: true, by: '' }; goalSheet('by'); break; }
-        var reopened = false;
-        mutateWeek(w.id, function (x) {
-          var g = x.games[gi]; if (!g) return; var k = sd === 'A' ? 'a' : 'b', n = +g[k] || 0;
-          if (!n) return;
-          var before = Math.max(+g.a || 0, +g.b || 0);
-          g.goals = Array.isArray(g.goals) ? g.goals : [];
-          for (var j = g.goals.length - 1; j >= 0; j--) if (g.goals[j].s === sd) { removed = g.goals.splice(j, 1)[0]; break; }
-          g[k] = n - 1;
-          reopened = undoWin(x, gi, before);
-        });
-        if (reopened) { S.gameIdx = gi; render(); }
-        if (removed && removed.by) toast('Took off ' + (removed.by === 'og' ? 'the own goal' : scorerName(removed.by) + '\'s goal'));
+        var cg = games(w)[gameIndex(w)], sd = t.dataset.side; if (!cg) break;
+        if (+t.dataset.d > 0) { S.goal = { wid: w.id, gk: cg.k, k: '', s: sd, all: false, fresh: true, by: '' }; goalSheet('by'); break; }
+        var pr = act([{ t: 'popGoal', wid: w.id, gk: cg.k, s: sd }]);
+        if (!pr.ok) break;
+        if (pr.undo === 'reopened') { S.gameK = cg.k; render(); }
+        toast((pr.removed && pr.removed.by ? 'Took off ' + (pr.removed.by === 'og' ? 'the own goal' : scorerName(pr.removed.by) + '\'s goal') + '.' : 'Took a goal off.') +
+          (pr.undo === 'reopened' ? ' The game is back on.' : pr.undo === 'kept' ? ' The game stays finished because the next one has started.' : ''));
       } break;
       case 'edit-goal': if (w) {
-        var egi = gameIndex(w), ei = +t.dataset.i, eg = (games(w)[egi] || {}).goals || [];
-        S.goal = { wid: w.id, gi: egi, idx: ei, s: t.dataset.side, all: false, fresh: false, by: ei >= 0 && eg[ei] ? eg[ei].by || '' : '' };
+        var eg = games(w)[gameIndex(w)], ek = t.dataset.k || '', ex = ek ? (eg.goals || []).filter(function (y) { return y.k === ek; })[0] : null;
+        S.goal = { wid: w.id, gk: eg.k, k: ek, s: t.dataset.side, legacy: !ek, all: false, fresh: false, by: ex ? ex.by || '' : '' };
         goalSheet(S.goal.by ? 'menu' : 'by');
       } break;
       case 'goal-step': goalSheet(t.dataset.step); break;
@@ -800,15 +881,11 @@
         break;
       }
       case 'delete-goal': armOrRun(t, function () {
-        var G = S.goal;
-        mutateWeek(G.wid, function (x) {
-          var g = x.games && x.games[G.gi]; if (!g) return; var k = G.s === 'A' ? 'a' : 'b';
-          var before = Math.max(+g.a || 0, +g.b || 0);
-          if (G.idx >= 0) { if (!g.goals || !g.goals[G.idx] || g.goals[G.idx].s !== G.s) return; g.goals.splice(G.idx, 1); }
-          g[k] = Math.max(0, (+g[k] || 0) - 1);
-          if (undoWin(x, G.gi, before)) S.gameIdx = G.gi;
-        });
-        closeSheet(); toast('Goal deleted');
+        var G = S.goal, dr = act([G.k ? { t: 'deleteGoal', wid: G.wid, gk: G.gk, k: G.k } : { t: 'deleteGoal', wid: G.wid, gk: G.gk, s: G.s }]);
+        closeSheet();
+        if (!dr.ok) { toast('That goal has already gone.'); return; }
+        if (dr.undo === 'reopened') { S.gameK = G.gk; render(); }
+        toast('Goal deleted.' + (dr.undo === 'reopened' ? ' The game is back on.' : dr.undo === 'kept' ? ' The game stays finished because the next one has started.' : ''));
       }); break;
       case 'share-wa': if (w) shareSheet(w); break;
       case 'share-go': if (w && shareFile) {
@@ -823,10 +900,23 @@
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { toast('Stats copied. Paste them anywhere.'); }, showIt);
         else showIt();
       } break;
-      case 'game-status': if (w) { var i2 = gameIndex(w); S.gameIdx = i2; mutateWeek(w.id, function (x) { if (x.games[i2]) x.games[i2].status = t.dataset.s; }); } break;
-      case 'add-game': if (w && games(w).length >= MAX_GAMES) { toast('That\'s the most games one night can hold.'); break; } if (w) { S.gameIdx = games(w).length; mutateWeek(w.id, function (x) { x.games = games(x).concat([{ a: 0, b: 0, status: 'upcoming' }]); }); } break;
-      case 'remove-game': if (w) armOrRun(t, function () { var i3 = gameIndex(w); S.gameIdx = null; mutateWeek(w.id, function (x) { x.games.splice(i3, 1); }); }); break;
-      case 'open-week': S.weekId = t.dataset.wid; S.gameIdx = null; S.picking = false; location.hash = '#tonight'; window.scrollTo(0, 0); break;
+      case 'game-status': if (w) {
+        var sg = games(w)[gameIndex(w)]; if (!sg) break;
+        var other = games(w).filter(function (o) { return o !== sg && o.status === 'live' && !WBOps.isEmpty(o); })[0];
+        if (t.dataset.s === 'live' && other) { toast('Game ' + (games(w).indexOf(other) + 1) + ' is being played. Give it full time first.'); break; }
+        S.gameK = sg.k; act([{ t: 'setStatus', wid: w.id, gk: sg.k, status: t.dataset.s }]);
+      } break;
+      case 'add-game': if (w && games(w).length >= MAX_GAMES) { toast('That\'s the most games one night can hold.'); break; }
+        if (w) { var nk = WBOps.uid(); S.gameK = nk; act([{ t: 'addGame', wid: w.id, gk: nk }]); } break;
+      case 'remove-game': if (w) armOrRun(t, function () { var rg = games(w)[gameIndex(w)]; S.gameK = null; if (rg) act([{ t: 'removeGame', wid: w.id, gk: rg.k }]); }); break;
+      case 'end-night': if (w) armOrRun(t, function () {
+        S.gameK = null; act([{ t: 'endNight', wid: w.id }]);
+        toast('Night over. Send the result to the group?'); shareSheet(currentWeek());
+      }); break;
+      case 'restore': armOrRun(t, function () {
+        direct({ op: 'restore', i: +t.dataset.i }, function () { S.gameK = null; closeSheet(); toast('Gone back to that version. What was there before is saved in Backups, so you can undo this.'); }).catch(function () {});
+      }); break;
+      case 'open-week': S.weekId = t.dataset.wid; S.gameK = null; S.picking = false; location.hash = '#tonight'; window.scrollTo(0, 0); break;
     }
   });
   document.addEventListener('keydown', function (e) {
@@ -834,7 +924,7 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('tr[data-action]')) { e.preventDefault(); e.target.click(); }
   });
   document.addEventListener('change', async function (e) {
-    if (e.target.id === 'weekSel') { S.weekId = e.target.value; S.gameIdx = null; S.picking = false; render(); }
+    if (e.target.id === 'weekSel') { S.weekId = e.target.value; S.gameK = null; S.picking = false; render(); }
     if (e.target.id === 'pf-photo' && e.target.files && e.target.files[0]) {
       try { draftPhoto = await fileToPhoto(e.target.files[0]); $('#pf-preview').innerHTML = '<img class="av av120" src="' + draftPhoto + '" alt="">'; }
       catch (err) { toast('That file couldn\'t be read as a photo. Try a JPEG or PNG.'); }
@@ -854,8 +944,8 @@
       try {
         await post({ op: 'login' }, pin);
         S.pin = pin; S.admin = true; try { localStorage.setItem(PIN_KEY, pin); } catch (x) {}
-        closeSheet(); render(); toast('Signed in as admin');
-      } catch (err) { btn.disabled = false; toast(err.status === 401 ? 'That PIN isn\'t right.' : (err.message || 'Couldn\'t sign in just now.')); }
+        S.saveErr = null; closeSheet(); render(); toast('Signed in as admin'); flush();
+      } catch (err) { btn.disabled = false; toast(err.status === 401 ? 'That PIN isn\'t right.' : (err.message || 'Couldn\'t sign in just now.')); } // 429: locked after too many wrong PINs
     }
     if (f.id === 'playerForm') {
       var name = $('#pf-name').value.trim(), nickname = $('#pf-nick').value.trim();
@@ -868,19 +958,18 @@
     if (f.id === 'nightForm') {
       var wid = f.dataset.wid;
       var fee = Math.max(0, Math.round((parseFloat($('#nf-fee').value) || 0) * 100) / 100);
-      var target = Math.max(0, Math.min(20, parseInt($('#nf-target').value, 10) || 0));
+      var tv = $('#nf-target').value.trim(), target = tv === '' ? 3 : Math.max(0, Math.min(20, parseInt(tv, 10) || 0)); // left blank: first to 3
       var teams = {
         A: { name: $('#nf-an').value.trim() || DEF_TEAMS.A.name, color: okColor($('#nf-ac').value) || DEF_TEAMS.A.color },
         B: { name: $('#nf-bn').value.trim() || DEF_TEAMS.B.name, color: okColor($('#nf-bc').value) || DEF_TEAMS.B.color }
       };
-      if (wid) { mutateWeek(wid, function (x) { x.fee = fee; x.target = target; x.teams = teams; }); closeSheet(); return; }
+      if (wid) { act([{ t: 'setNight', wid: wid, fee: fee, target: target, teams: teams }]); closeSheet(); return; }
       var date = $('#nf-date').value;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { $('#nf-date').focus(); return; }
       if (S.data.weeks[date]) { S.weekId = date; closeSheet(); toast('That night already exists, so it\'s open now.'); location.hash = '#tonight'; render(); return; }
       var copy = $('#nf-copy') && $('#nf-copy').checked && S.weeks[0];
-      var week = { id: date, fee: fee, target: target, teams: teams, squad: copy ? clone(copy.squad || {}) : {}, paid: {}, games: [{ a: 0, b: 0, status: 'upcoming' }] };
-      btn.disabled = true;
-      direct({ op: 'putWeek', week: week }, function () { S.weekId = date; S.gameIdx = null; S.picking = true; closeSheet(); location.hash = '#tonight'; render(); }).catch(function () { btn.disabled = false; });
+      act([{ t: 'createWeek', wid: date, fee: fee, target: target, teams: teams, squad: copy ? clone(copy.squad || {}) : {}, gk: WBOps.uid() }]);
+      S.weekId = date; S.gameK = null; S.picking = true; closeSheet(); location.hash = '#tonight'; render();
     }
   });
 
@@ -892,6 +981,11 @@
   window.addEventListener('hashchange', route);
 
   /* ---------- start ---------- */
+  S.pending = loadPending();
+  try { // the last scores this phone saw, so the page opens straight away (and with no signal); it catches up after
+    var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached && cached.data && cached.data.weeks) { S.server = cached.data; S.v = Number(cached.v) || 0; S.state = 'ready'; }
+  } catch (e) {}
   route();
   fetch(new URL('data/players.json', root))
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -900,5 +994,5 @@
         .map(function (p) { return { id: p.id, name: p.name, nickname: '', photo: p.photo ? new URL(p.photo, root).href : null, own: false }; });
     })
     .catch(function () { S.squad = []; })
-    .then(function () { rebuild(); poll(true); });
+    .then(function () { recompute(); poll(true).then(function () { flush(); }); });
 })();

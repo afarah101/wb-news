@@ -19,14 +19,14 @@ const int = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(Number(v) || 0))
 function cleanWeek(w) {
   if (!w || !DATE.test(w.id || '')) throw new Error('Bad date');
   const team = (t, name, color) => ({
-    name: str(t && t.name, 24) || name,
+    name: (str(t && t.name, 24) === 'Shirts' ? '' : str(t && t.name, 24)) || name, // 'Shirts' was the old default for team 2
     color: COLOR.test((t && t.color) || '') ? t.color : color
   });
   const squad = {}, paid = {};
   for (const [pid, side] of Object.entries(w.squad || {}).slice(0, 60)) if (PID.test(pid) && (side === 'A' || side === 'B')) squad[pid] = side;
   for (const pid of Object.keys(w.paid || {})) if (squad[pid] && w.paid[pid] === true) paid[pid] = true;
   // Each goal: { s: 'A'|'B' (team that gets the goal), by: player id | 'og' (own goal) | '' (not credited yet), as: player id | '' (no assist) }
-  const games = (Array.isArray(w.games) ? w.games : []).slice(0, 12).map(g => {
+  const games = (Array.isArray(w.games) ? w.games : []).slice(0, 30).map(g => {
     const goals = (Array.isArray(g && g.goals) ? g.goals : []).slice(0, 198).map(x => {
       const by = x && (x.by === 'og' || PID.test(x.by || '')) ? x.by : '';
       const as = x && by && by !== 'og' && PID.test(x.as || '') && x.as !== by ? x.as : '';
@@ -42,7 +42,8 @@ function cleanWeek(w) {
   return {
     id: w.id,
     fee: Math.min(100, Math.max(0, Math.round((Number(w.fee) || 0) * 100) / 100)),
-    teams: { A: team(w.teams && w.teams.A, 'Bibs', '#F26B1D'), B: team(w.teams && w.teams.B, 'Shirts', '#2B63D9') },
+    target: w.target == null || w.target === '' ? 3 : int(w.target, 0, 20), // first to N goals wins a game; 0 = no limit
+    teams: { A: team(w.teams && w.teams.A, 'Bibs', '#F26B1D'), B: team(w.teams && w.teams.B, 'Non Bibs', '#2B63D9') },
     squad, paid, games,
     updatedAt: Date.now()
   };

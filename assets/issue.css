@@ -26,6 +26,7 @@
   .phone-col:focus-visible{outline-offset:-3px} /* full-bleed on phones: keep the ring on screen */
   h1,h2,.ph-h,.standfirst,.deck{text-wrap:balance}
   .n{color:var(--wb-text);font-weight:600}
+  h1 .n,h2 .n,h3 .n,b .n{font-weight:inherit} /* inside a heading or a bold label the name keeps that weight */
 
   /* ---------- masthead ---------- */
   .top{max-width:var(--page);margin:0 auto}

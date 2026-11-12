@@ -11,7 +11,7 @@
   var GROUPS = ['Goalkeepers', 'Defenders', 'Midfielders', 'Forwards']; // page order; empty groups are hidden
   var POSITIONS = {
     GK: 'Goalkeeper', CB: 'Centre-Back', LB: 'Left-Back', RB: 'Right-Back',
-    CDM: 'Defensive Midfielder', CM: 'Central Midfielder', CAM: 'Attacking Midfielder', LW: 'Left Winger', RW: 'Right Winger', ST: 'Striker'
+    CDM: 'Defensive Midfielder', CM: 'Central Midfielder', CAM: 'Attacking Midfielder', B2B: 'Box-to-Box Midfielder', LW: 'Left Winger', RW: 'Right Winger', ST: 'Striker'
   };
   var DASH = '—';
   var PLACEHOLDER = 'assets/squad/placeholder.svg'; // shown when a player has no photo, or the photo fails to load

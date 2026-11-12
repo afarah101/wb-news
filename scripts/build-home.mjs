@@ -59,6 +59,8 @@ const longDate = (it) => `${part(it, { weekday: 'long' })} ${part(it, { day: 'nu
 const clock = (s) => { const t = Math.round(s); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 const story = (it) => `issues/${esc(it.slug)}/#story`; // #story opens the 5 Nov page on its article; other pages ignore it
 const lines = (a) => a.filter(Boolean).join('\n');
+// the photo slots crop to their own shape: hold the crop on cover.focus so the subject stays in frame
+const focus = (it) => { const [x, y] = it.cover.focus ?? [0.5, 0.5]; return ` style="object-position:${Math.round(x * 100)}% ${Math.round(y * 100)}%"`; };
 
 // ---------- the page ----------
 const latest = issues[0];
@@ -119,7 +121,7 @@ ${lines([
 
 <main class="home">
   <section class="home-lead">
-    <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"></a>
+    <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"${focus(latest)}></a>
     <div class="home-copy">
       <div class="kick">${esc(latest.type.toUpperCase())} · THURSDAY NIGHT FOOTBALL</div>
       <h1>${esc(latest.title)}</h1>
@@ -151,7 +153,7 @@ ${videos.map((it) => `      <figure class="clip">
     <h2 id="previous">Previous issues</h2>
     <div class="prev">
 ${previous.map((it) => `      <a class="card" href="${story(it)}">
-        <img src="${esc(it.cover.src)}" alt="" loading="lazy">
+        <img src="${esc(it.cover.src)}" alt="" loading="lazy"${focus(it)}>
         <span><small>${esc(it.type)} · <time datetime="${esc(it.date)}">${esc(shortDate(it))}</time></small><b>${esc(it.displayTitle)}</b></span>
       </a>`).join('\n')}
     </div>

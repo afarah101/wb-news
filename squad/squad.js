@@ -35,7 +35,7 @@
     if (m) {
       var src = el('source');
       src.type = 'image/avif';
-      src.srcset = new URL('assets/squad/' + (small ? '480/' : '') + m[1] + '.avif', root).href;
+      src.dataset.srcset = new URL('assets/squad/' + (small ? '480/' : '') + m[1] + '.avif', root).href;
       pic.append(src);
     }
     img.addEventListener('error', function () {
@@ -49,8 +49,25 @@
     img.decoding = 'async';
     if (eager) img.fetchPriority = 'high'; else img.loading = 'lazy';
     pic.append(img);
-    img.src = new URL(shown(p.photo) === DASH ? PLACEHOLDER : p.photo, root).href; // set last, inside the <picture>, so only one file is fetched
+    img.dataset.src = new URL(shown(p.photo) === DASH ? PLACEHOLDER : p.photo, root).href;
+    if (eager || !small) load(pic); else waiting.push(pic);
     return pic;
+  }
+  // sources are set last, inside the <picture>, so only one file is fetched
+  function load(pic) {
+    var s = pic.querySelector('source'), img = pic.querySelector('img');
+    if (s) s.srcset = s.dataset.srcset;
+    img.src = img.dataset.src;
+  }
+  // The first row of cards gets the connection to itself: the other cards' photos start once those are in (or after 1.5 s).
+  var waiting = [];
+  function loadWaiting(first) {
+    var go = function () { waiting.splice(0).forEach(load); };
+    var pending = first.filter(function (i) { return !i.complete; });
+    if (!pending.length) return go();
+    var left = pending.length, t = setTimeout(go, 1500);
+    pending.forEach(function (i) { i.addEventListener('load', done, { once: true }); i.addEventListener('error', done, { once: true }); });
+    function done() { if (--left <= 0) { clearTimeout(t); go(); } }
   }
 
   var players = [];  // in page order: by group, then as listed in players.json
@@ -82,6 +99,7 @@
       section.append(h2, ul);
       groupsBox.append(section);
     });
+    loadWaiting(Array.prototype.slice.call(groupsBox.querySelectorAll('.sq-img'), 0, first));
   }
 
   // ---------- profile view ----------

@@ -1,7 +1,7 @@
 /* Match Centre only. Uses the site tokens and fonts from assets/issue.css (loaded first). */
 .mc{max-width:var(--page);margin:0 auto;padding:0 var(--gutter) var(--s6)}
 .mc-head{padding-top:var(--s4)}
-.mc-head h1{margin-top:var(--s2);font-family:var(--serif);font-weight:700;font-size:40px;line-height:1.04;letter-spacing:-.025em}
+.mc-head h1{margin-top:var(--s2);font-family:var(--serif);font-weight:700;font-size:var(--t-h1);line-height:1.04;letter-spacing:-.025em}
 .mc-msg{padding:var(--s3) 0;font-size:15px;color:var(--muted)}
 .num{font-variant-numeric:tabular-nums}
 .muted{color:var(--muted)}
@@ -32,7 +32,7 @@
 select.btn{appearance:auto;padding-right:var(--s1)}
 
 /* ---------- night header ---------- */
-.night h2{margin-top:var(--s1);font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.08;letter-spacing:-.02em}
+.night h2{margin-top:var(--s1);font-family:var(--serif);font-weight:700;font-size:var(--t-h2);line-height:1.08;letter-spacing:-.02em}
 
 /* ---------- scoreboard: charcoal like the squad cards, orange base line ---------- */
 .board{background:linear-gradient(160deg,var(--ink-2) 0%,var(--ink) 55%,var(--bezel) 100%);color:var(--on-ink);border-bottom:4px solid var(--wb)}
@@ -171,7 +171,7 @@ button.pay{cursor:pointer}
 
 /* ---------- history ---------- */
 .hist{display:flex;flex-direction:column;gap:var(--s1);width:100%;padding:var(--s2) 0;background:none;border:0;border-top:4px solid var(--ink);font:inherit;color:inherit;text-align:left;cursor:pointer}
-.hist b.d{font-family:var(--serif);font-size:22px;letter-spacing:-.01em}
+.hist b.d{font-family:var(--serif);font-size:var(--t-h3);letter-spacing:-.01em}
 .hist-st{font-size:14px;line-height:1.4}
 .hist-st b{font-size:12px;font-weight:800;font-stretch:87.5%;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
 .hist-night{font-weight:800;font-size:15px}
@@ -182,7 +182,7 @@ button.pay{cursor:pointer}
 .mc-scrim.on{display:flex}
 .mc-sheet{width:100%;max-width:560px;max-height:92%;overflow-y:auto;display:flex;flex-direction:column;gap:var(--s2);padding:var(--s3) var(--s2) var(--s4);background:var(--paper);border-top:4px solid var(--wb)}
 @media (min-width:640px){.mc-scrim{align-items:center;padding:var(--s2)}}
-.mc-sheet h2{font-family:var(--serif);font-weight:700;font-size:28px;line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere}
+.mc-sheet h2{font-family:var(--serif);font-weight:700;font-size:var(--t-h2);line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:14px;font-weight:700}
 .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
@@ -209,7 +209,7 @@ button.pay{cursor:pointer}
 .mc-toast{position:fixed;left:50%;bottom:var(--s3);z-index:50;transform:translateX(-50%);max-width:calc(100% - 32px);display:none;padding:12px var(--s2);background:var(--ink);color:var(--on-ink);font-size:15px;font-weight:700;border-radius:2px}
 .mc-toast.on{display:block}
 .hero-empty{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s2);padding:var(--s3) 0;border-top:4px solid var(--ink)}
-.hero-empty h2{font-family:var(--serif);font-weight:700;font-size:28px;letter-spacing:-.02em}
+.hero-empty h2{font-family:var(--serif);font-weight:700;font-size:var(--t-h2);letter-spacing:-.02em}
 .hero-empty p{max-width:36em;color:var(--ink-2);font-size:16px;line-height:1.45}
 
 /* ---------- phones: one-line scoreboard bar, 44px touch targets, press feedback ---------- */

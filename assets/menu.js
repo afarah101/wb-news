@@ -27,7 +27,10 @@
     '<div class="dr-head"><h2 id="drawer-title">Issues</h2>' +
     '<button class="icon-btn" type="button" aria-label="Close issues menu">' +
     '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-    '</button></div><div class="season">THURSDAY SESSIONS · NEWEST FIRST</div><ol class="issues"></ol>' +
+    '</button></div><ol class="issues"><li><a class="issue" href="' + base.href + '"' + (location.pathname.replace(/index\.html$/, '') === base.pathname ? ' aria-current="page"' : '') + '>' +
+    '<span class="db" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>' +
+    '<span class="tt"><span class="tag"><span>Front page</span></span><span class="t">Home</span></span></a></li></ol>' +
+    '<div class="season">THURSDAY SESSIONS · NEWEST FIRST</div><ol class="issues" data-sessions></ol>' +
     '<div class="season">THE TEAM</div><ol class="issues"><li><a class="issue" href="' + new URL('squad/', base).href + '"' +
     (location.pathname.replace(/index\.html$/, '') === new URL('squad/', base).pathname ? ' aria-current="page"' : '') + '>' +
     '<span class="db" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M8 3l-5 3 2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>' +
@@ -37,7 +40,7 @@
     '<span class="db" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>' +
     '<span class="tt"><span class="tag"><span>Scores &amp; subs</span></span><span class="t">Match Centre</span></span></a></li></ol>';
   document.body.append(scrim, drawer);
-  var list = drawer.querySelector('.issues');
+  var list = drawer.querySelector('[data-sessions]');
   var closeBtn = drawer.querySelector('.icon-btn');
 
   function renderDrawer(issues) {
@@ -77,9 +80,28 @@
     if (issues[i - 1]) link(issues[i - 1], 'next', 'Next issue →');
   }
 
+  // ---------- the crest goes to the homepage; every footer gets the same site links ----------
+  document.querySelectorAll('.brand').forEach(function (a) { a.href = base.href; });
+  var here = location.pathname.replace(/index\.html$/, '');
+  var footLinks = el('nav', 'foot-links');
+  footLinks.setAttribute('aria-label', 'Site');
+  function footLink(text, href) { var a = el('a', null, text); a.href = href; footLinks.append(a); return a; }
+  footLink('Home', base.href);
+  footLink('Squad', new URL('squad/', base).href);
+  footLink('Match Centre', new URL('match/', base).href);
+  var latest = footLink('Latest issue', base.href); // the homepage leads with the latest issue until issues.json says which one it is
+  function markCurrent() {
+    Array.prototype.forEach.call(footLinks.children, function (a) {
+      if (new URL(a.href).pathname === here && !(a === latest && here === base.pathname)) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  markCurrent();
+  var foot = document.querySelector('.foot');
+  if (foot) foot.append(footLinks);
+
   fetch(new URL('issues.json', base))
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (issues) { renderDrawer(issues); renderNav(issues); })
+    .then(function (issues) { renderDrawer(issues); renderNav(issues); if (issues[0]) latest.href = issueUrl(issues[0].slug); markCurrent(); })
     .catch(function () { list.append(el('li', 'err', 'The issue list could not load.')); });
 
   // ---------- open / close: transform + opacity only, Esc, backdrop, swipe-left, focus trap ----------

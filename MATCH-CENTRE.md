@@ -31,8 +31,9 @@ Until this is done the page says *Not connected yet*.
 
 1. Open `/match/`, tap **Admin sign in**, enter the PIN.
 2. **Set up** the night: date, cost per player, *First to* (goals that win a game, 3 by default), team names and colours (Bibs and Non Bibs by default).
-3. **Pick teams:** put each player in a team or leave them Out.
-4. **Kick off**. For each goal tap **+**, pick **who scored** (or *Own goal*), then **who set it up** (or *No assist*). The goal only goes on the scoreboard once both are picked, so every goal has its scorer and assist.
+3. **Pick teams:** put each player in a team or leave them Out. Once someone's in a team, tap **Owes £…** under their name when they pay, to switch it to **Paid** (the top of the list shows how many have paid).
+   - When you tap **Done picking**, a **team sheet** picture opens: the same design as the results card, with both line-ups and photos, before kick-off. Tap **Share**, then pick WhatsApp and the group. **Send teams to WhatsApp** under the team lists makes it again at any time, for example after a late change.
+4. **Kick off** (each game has a running clock next to LIVE, from kick-off to full time; it runs on the server's time so every phone shows the same, and finished games show how long they took). For each goal tap **+**, pick **who scored** (or *Own goal*), then **who set it up** (or *No assist*). The goal only goes on the scoreboard once both are picked, so every goal has its scorer and assist.
    - **First to 3:** when a team scores its 3rd goal the game ends and the next game kicks off by itself. Take the winning goal off by mistake and the game reopens. Set *First to* to 0 in Edit night to play on until you tap **Full time**.
    - **Fixing a mistake:** tap any goal on the scoreboard (marked *Edit*) to change just the scorer, just the assist, or delete it. Older games are under the Game buttons, older nights in the date menu. **−** takes off that team's most recent goal.
 5. Tap a player's **Owes £…** chip once they've paid.

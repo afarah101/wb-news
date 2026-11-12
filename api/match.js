@@ -87,10 +87,10 @@ async function mutate(change) {
 // What a page that already has version `since` needs.
 function payload(data, since) {
   since = Number(since) || 0;
-  if (!since || since > data.v || since < (Number(data.fullV) || 0)) return { v: data.v, data };
+  if (!since || since > data.v || since < (Number(data.fullV) || 0)) return { v: data.v, now: Date.now(), data };
   const weeks = {};
   for (const id of Object.keys(data.weeks)) if ((Number(data.wv[id]) || 0) > since) weeks[id] = data.weeks[id];
-  return { v: data.v, delta: { weeks, players: data.players, formers: data.formers } };
+  return { v: data.v, now: Date.now(), delta: { weeks, players: data.players, formers: data.formers } };
 }
 
 function label(op, data) {
@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
       const since = Number(req.query.v);
       if (since) {
         const [v] = await redis([['GET', KEY_V]]);
-        if (Number(v) === since) return send(res, 200, { v: since, same: true });
+        if (Number(v) === since) return send(res, 200, { v: since, same: true, now: Date.now() });
       }
       const [raw] = await redis([['GET', KEY_DATA]]);
       return send(res, 200, payload(parse(raw), since));
@@ -148,6 +148,7 @@ module.exports = async (req, res) => {
           if (!id) return { id, ok: false, why: 'bad' };
           if (done.has(id)) return { id, ok: true, dup: true };
           let r;
+          op.at = Date.now(); // game clocks run on the server's time, so every phone shows the same
           try { r = Ops.apply(data, op); } catch (e) { r = { ok: false, why: 'bad' }; }
           done.add(id);
           if (r.ok) touched.add(String(op.wid));
@@ -214,7 +215,7 @@ module.exports = async (req, res) => {
     });
     if (result.error === 'busy') return send(res, 503, { error: 'busy' });
     if (result.error) return send(res, 400, { error: result.error });
-    return send(res, 200, { v: result.data.v, data: result.data });
+    return send(res, 200, { v: result.data.v, now: Date.now(), data: result.data });
   } catch (e) {
     return send(res, e.message === 'Bad date' ? 400 : 500, { error: e.message === 'Bad date' ? 'Bad date' : 'server' });
   }

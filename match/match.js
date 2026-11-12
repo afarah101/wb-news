@@ -23,7 +23,7 @@
   var S = {
     state: 'loading', v: 0, data: { players: {}, weeks: {} }, squad: [],
     players: new Map(), weeks: [], stats: {},
-    server: null, pending: [], saveErr: null,
+    server: null, pending: [], saveErr: null, offset: 0,
     pin: null, admin: false, offline: false,
     view: 'tonight', weekId: null, gameK: null, picking: false, pickQuery: ''
   };
@@ -78,6 +78,26 @@
   /* First to N (worked out in ops.js): when a team reaches the night's target the game ends and the next one kicks off by itself. */
   var MAX_GAMES = WBOps.MAX_GAMES;
   function targetOf(w) { return WBOps.targetOf(w); }
+  /* Game clock. Times are the server's, so each phone corrects for its own clock (S.offset) and they all agree. */
+  function serverNow() { return Date.now() + (S.offset || 0); }
+  function fmtDur(ms) {
+    var t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60;
+    return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+  function gameTime(g) { // ms played so far (live) or in total (finished), or null if there's no clock for it
+    if (!g || !g.start) return null;
+    if (g.status === 'live') return serverNow() - g.start;
+    if (g.status === 'ft' && g.end) return g.end - g.start;
+    return null;
+  }
+  function clockHtml(g) {
+    var t = gameTime(g); if (t == null) return '';
+    return '<span class="clock num"' + (g.status === 'live' ? ' data-start="' + g.start + '"' : '') + '>' + fmtDur(t) + '</span>';
+  }
+  setInterval(function () { // tick the live clocks without redrawing the page
+    document.querySelectorAll('.clock[data-start]').forEach(function (el) { el.textContent = fmtDur(serverNow() - Number(el.getAttribute('data-start'))); });
+  }, 500);
+
   /* The night goes to the team that wins the most games. Only finished games count; a drawn game counts for neither.
      The night carries on (a team "leads", it hasn't "won") until an admin taps End night, or the night is in the past. */
   function nightResult(w) {
@@ -197,6 +217,7 @@
     var res = { ok: false }, trial = clone(S.data);
     ops.forEach(function (op) {
       op.id = WBOps.uid() + WBOps.uid().slice(-6);
+      op.at = serverNow(); // the server replaces this with its own time
       res = WBOps.apply(trial, op);
       if (res.ok) S.pending.push(op);
     });
@@ -204,6 +225,7 @@
     return res;
   }
   function mergeServer(j) {
+    if (j && j.now) S.offset = j.now - Date.now(); // how far this phone's clock is from the server's
     if (!j || (j.v != null && S.server && j.v < S.v)) return false; // an older answer that arrived late
     if (j.data) S.server = j.data;
     else if (j.delta) {
@@ -261,6 +283,7 @@
       var j = await r.json();
       var was = S.state, wasOff = S.offline;
       S.offline = false; S.state = 'ready';
+      if (j.same && j.now) S.offset = j.now - Date.now();
       if (!j.same && mergeServer(j)) { recompute(); render(); }
       else if (was !== 'ready' || wasOff) render();
       if (S.pending.length && S.saveErr === 'retry' && !sending) { retryDelay = 2000; flush(); } // back online: send what's waiting
@@ -348,23 +371,33 @@
     var board;
     if (g) {
       var label = g.status === 'live' ? 'Live' : g.status === 'ft' ? 'Full time' : 'Not started';
-      var chips = (gs.length > 1 || S.admin) ? gs.map(function (x, i) {
-        return '<button class="chip num" data-action="pick-game" data-k="' + esc(x.k) + '" aria-pressed="' + (i === gi) + '">Game ' + (i + 1) + ' · ' +
-          (x.status === 'live' ? 'LIVE ' : x.status === 'ft' ? 'FT ' : '') + (+x.a || 0) + '–' + (+x.b || 0) + '</button>';
-      }).join('') : '';
+      // Tonight's games, one per row: the game number sits apart from the score, and each score is in its team's colour.
+      var chips = (gs.length > 1 || S.admin) ? '<div class="games-list"><div class="label">Tonight\'s games</div><ol>' + gs.map(function (x, i) {
+        var a = +x.a || 0, b = +x.b || 0, done = x.status === 'ft', winA = done && a > b, winB = done && b > a, gt = gameTime(x);
+        var pill = function (t, n, win, lose, scoreFirst) { // the team's name and score together in its colour; the winner's is solid
+          var nm = '<span class="gl-name">' + esc(t.name) + '</span>', sc = '<b class="num">' + n + '</b>';
+          return '<span class="gl-pill' + (win ? ' win' : '') + (lose ? ' lose' : '') + '" style="--team:' + t.color + '">' + (scoreFirst ? sc + nm : nm + sc) + '</span>';
+        };
+        var status = x.status === 'live' ? '<span class="gl-status live">Live</span>' : done ? '<span class="gl-status ft">FT</span>' : '<span class="gl-status">Next</span>';
+        return '<li><button class="gl-row' + (x.status === 'live' ? ' is-live' : '') + '" data-action="pick-game" data-k="' + esc(x.k) + '" aria-pressed="' + (i === gi) + '" aria-label="Game ' + (i + 1) + ': ' + esc(A.name) + ' ' + a + ', ' + esc(B.name) + ' ' + b + '">' +
+          '<span class="gl-head"><span class="gl-num">Game ' + (i + 1) + '</span><span class="spacer"></span>' +
+            (x.status === 'live' ? clockHtml(x).replace('class="clock', 'class="clock gl-time') : done && gt != null ? '<span class="gl-time num">' + fmtDur(gt) + '</span>' : '') + status + '</span>' +
+          '<span class="gl-match">' + pill(A, a, winA, winB, false) + '<span class="gl-dash">–</span>' + pill(B, b, winB, winA, true) + '</span>' +
+          '</button></li>';
+      }).join('') + '</ol></div>' : '';
       var admin = S.admin ? (
         (g.status !== 'live' ? '<button class="btn sm' + (g.status === 'ft' ? '' : ' wb') + '" data-action="game-status" data-s="live">' + (g.status === 'ft' ? 'Reopen game' : 'Kick off') + '</button>' : '') +
         (g.status === 'live' ? '<button class="btn sm wb" data-action="game-status" data-s="ft">Full time</button>' : '') +
         '<button class="btn sm" data-action="add-game">Add another game</button>' +
         (gs.length > 1 ? '<button class="btn sm danger" data-action="remove-game">Remove game ' + (gi + 1) + '</button>' : '')) : '';
       board = '<div class="board"><div class="board-top"><span class="label">' + (gs.length > 1 ? 'Game ' + (gi + 1) + ' of ' + gs.length : 'Tonight\'s game') + (targetOf(w) ? ' · First to ' + targetOf(w) : '') + '</span><span class="spacer"></span>' +
-        '<span class="mc-status ' + (g.status === 'live' ? 'live' : g.status === 'ft' ? 'ft' : '') + '">' + label + '</span></div>' +
+        clockHtml(g) + '<span class="mc-status ' + (g.status === 'live' ? 'live' : g.status === 'ft' ? 'ft' : '') + '">' + label + '</span></div>' +
         '<div class="mc-score">' + side('A', A, +g.a || 0) + '<span class="dash">–</span>' + side('B', B, +g.b || 0) + '</div>' +
         scorersHtml(g) +
         (nightNow.played ? '<div class="nightbar"><span class="label">' + (nightNow.open ? 'Tonight so far' : 'Tonight') + '</span><b>' + esc(nightLine(w, nightNow, nightNow.open)) + '</b>' +
           (S.admin ? '<span class="spacer"></span>' + (gs.some(function (x) { return x.status !== 'ft'; }) ? '<button class="btn sm" data-action="end-night">End night</button>' : '') +
             (!nightNow.open ? '<button class="btn sm wa" data-action="share-wa">Send result to WhatsApp</button>' : '') : '') + '</div>' : '') +
-        (chips || admin ? '<div class="board-foot">' + chips + (chips && admin ? '<span class="spacer"></span>' : '') + admin + '</div>' : '') + '</div>';
+        chips + (admin ? '<div class="board-foot">' + admin + '</div>' : '') + '</div>';
     } else {
       board = '<div class="board"><div class="board-empty">' + (S.admin ? '<button class="btn sm wb" data-action="add-game">Add a game</button>' : 'No game set up for this night yet.') + '</div></div>';
     }
@@ -402,19 +435,23 @@
         '<button class="btn" data-action="edit-night">Edit night</button><button class="btn" data-action="new-night">New night</button></div>' : '') +
       (S.admin && S.picking ? pickerHtml(w, A, B, sA.length, sB.length) : '') +
       board +
-      '<div class="teams">' + teamCard(A, sA) + teamCard(B, sB) + '</div>';
+      '<div class="teams">' + teamCard(A, sA) + teamCard(B, sB) + '</div>' +
+      (sA.length && sB.length ? '<div class="row"><button class="btn wa" data-action="share-teams">Send teams to WhatsApp</button></div>' : '');
   }
 
   function pickerHtml(w, A, B, nA, nB) {
     var q = S.pickQuery.trim().toLowerCase(), squad = w.squad || {};
     var list = Array.from(S.players.values()).filter(function (p) { return !p.former; }).sort(byName).filter(function (p) { return !q || ((p.name || '') + ' ' + (p.nickname || '')).toLowerCase().indexOf(q) >= 0; });
-    return '<div class="picker"><div class="row"><span class="label">Pick teams</span><span class="spacer"></span>' +
+    var fee = +w.fee || 0, inIds = Object.keys(squad).filter(function (pid) { return squad[pid] === 'A' || squad[pid] === 'B'; });
+    var paidN = inIds.filter(function (pid) { return w.paid && w.paid[pid]; }).length;
+    return '<div class="picker"><div class="row"><span class="label">Pick teams' + (fee && inIds.length ? ' · ' + paidN + ' of ' + inIds.length + ' paid' : '') + '</span><span class="spacer"></span>' +
       '<b class="num"><span style="color:' + A.color + '">' + esc(A.name) + ' ' + nA + '</span> v <span style="color:' + B.color + '">' + nB + ' ' + esc(B.name) + '</span></b></div>' +
       '<div class="row" style="margin-top:12px;flex-wrap:nowrap"><input type="search" id="pickSearch" placeholder="Find a player" aria-label="Find a player" value="' + esc(S.pickQuery) + '">' +
       '<button class="btn" data-action="add-player">Add player</button></div><ul>' +
       (list.map(function (p) {
         var s = squad[p.id] || '';
-        return '<li>' + avatar(p, 'av36') + '<span class="nm">' + esc(pName(p)) + '</span><span class="seg" role="group" aria-label="Team for ' + esc(pName(p)) + '">' +
+        // once a player's in a team, a Paid switch sits under their name so subs can be ticked off before kick-off
+        return '<li>' + avatar(p, 'av36') + '<span class="nm">' + esc(pName(p)) + (s && fee ? '<span class="pick-pay">' + payChip(w, p.id) + '</span>' : '') + '</span><span class="seg" role="group" aria-label="Team for ' + esc(pName(p)) + '">' +
           '<button data-action="squad" data-pid="' + esc(p.id) + '" data-side="A" aria-pressed="' + (s === 'A') + '" style="--team:' + A.color + '" title="' + esc(A.name) + '">' + esc(A.name.slice(0, 8)) + '</button>' +
           '<button data-action="squad" data-pid="' + esc(p.id) + '" data-side="" aria-pressed="' + !s + '" title="Not playing">Out</button>' +
           '<button data-action="squad" data-pid="' + esc(p.id) + '" data-side="B" aria-pressed="' + (s === 'B') + '" style="--team:' + B.color + '" title="' + esc(B.name) + '">' + esc(B.name.slice(0, 8)) + '</button></span></li>';
@@ -626,7 +663,19 @@
     }
     return true;
   }
-  function waLink(w) { return 'https://wa.me/?text=' + encodeURIComponent(statsText(w, true)); }
+  function waLink(w, mode) { return 'https://wa.me/?text=' + encodeURIComponent(mode === 'teams' ? teamsText(w, true) : statsText(w, true)); }
+  function teamsText(w, wa) { // the team sheet as text: both line-ups, before kick-off
+    var bold = function (x) { return wa ? '*' + x + '*' : x; }, sq = w.squad || {};
+    var lines = [bold('Western Ballers FC · ' + fmtDate(w.id, true)), bold('Tonight\'s teams')];
+    ['A', 'B'].forEach(function (sd) {
+      var ps = Object.keys(sq).filter(function (pid) { return sq[pid] === sd && S.players.has(pid); }).map(function (pid) { return S.players.get(pid); }).sort(byName);
+      if (!ps.length) return;
+      lines.push('', bold(teamOf(w, sd).name + ' (' + ps.length + ')'));
+      ps.forEach(function (p) { lines.push(pName(p)); });
+    });
+    return lines.join('\n');
+  }
+  function teamsPicked(w) { var sq = w.squad || {}, v = Object.keys(sq).map(function (k) { return sq[k]; }); return v.indexOf('A') >= 0 && v.indexOf('B') >= 0; }
   /* Line-ups for the night with each player's goals and assists, best first. Goals count for the team they were scored for,
      so someone who switched teams during the night shows under both with what they did for each. */
   function lineups(w) {
@@ -659,7 +708,7 @@
     var pg = playedGames(w);
     if (pg.length) {
       lines.push('', bold('Games'));
-      pg.forEach(function (x) { lines.push('Game ' + x.n + ': ' + A.name + ' ' + (+x.g.a || 0) + '–' + (+x.g.b || 0) + ' ' + B.name + (x.g.status === 'live' ? ' (still playing)' : '')); });
+      pg.forEach(function (x) { var gt = x.g.status === 'ft' ? gameTime(x.g) : null; lines.push('Game ' + x.n + ': ' + A.name + ' ' + (+x.g.a || 0) + '–' + (+x.g.b || 0) + ' ' + B.name + (x.g.status === 'live' ? ' (still playing)' : gt != null ? ' (' + fmtDur(gt) + ')' : '')); });
     }
     if (lu.tot.open) lines.push('', lu.tot.open + ' goal' + (lu.tot.open === 1 ? '' : 's') + ' still without a scorer');
     return lines.join('\n');
@@ -675,13 +724,21 @@
       i.src = src;
     });
   }
-  async function renderCard(w) {
+  async function renderCard(w, mode) { // mode 'teams': the team sheet before kick-off (no goals, assists or games)
     try { await document.fonts.ready; } catch (e) {}
-    var A = teamOf(w, 'A'), B = teamOf(w, 'B'), lu = lineups(w), nr = nightResult(w), pg = playedGames(w);
+    var teamsOnly = mode === 'teams';
+    var A = teamOf(w, 'A'), B = teamOf(w, 'B'), lu = lineups(w), nr = nightResult(w), pg = teamsOnly ? [] : playedGames(w);
+    if (teamsOnly) { // the squad as picked, A to Z, nothing scored yet
+      var sq = w.squad || {};
+      ['A', 'B'].forEach(function (sd) {
+        lu[sd] = Object.keys(sq).filter(function (pid) { return sq[pid] === sd && S.players.has(pid); })
+          .map(function (pid) { return { p: S.players.get(pid), g: 0, a: 0 }; }).sort(function (x, y) { return byName(x.p, y.p); });
+      });
+    }
     var W = 1080, P = 56, SANS = '"Roboto", "Helvetica Neue", Arial, sans-serif', SERIF = '"Newsreader", Georgia, serif';
     var INK = '#121212', PAPER = '#ffffff', PAPER2 = '#f7f5f2', MUTED = '#5c5c5c', WB = '#F26B1D';
     var ROW = 156, rows = Math.max(lu.A.length, lu.B.length, 1);
-    var hHead = 200, hRes = 250, hLine = 90 + rows * ROW + 30, hGames = pg.length ? 90 + pg.length * 78 + 30 : 0, hFoot = 80;
+    var hHead = 200, hRes = teamsOnly ? 250 : 340, hLine = 90 + rows * ROW + 30, hGames = pg.length ? 90 + pg.length * 78 + 30 : 0, hFoot = 80;
     var H = hHead + hRes + hLine + hGames + hFoot;
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
@@ -696,15 +753,39 @@
     var hx = P + (crest ? 120 * crest.naturalWidth / crest.naturalHeight + 32 : 0);
     txt('Western Ballers FC', hx, 82, '700 54px ' + SERIF, PAPER);
     txt(fmtDate(w.id, true).toUpperCase(), hx, 138, '800 26px ' + SANS, WB);
+    if (teamsOnly) { // team sheet band: each team's name on its own colour
+      x.fillStyle = A.color; x.fillRect(0, hHead, W / 2, hRes);
+      x.fillStyle = B.color; x.fillRect(W / 2, hHead, W / 2, hRes);
+      [[A, W / 4], [B, 3 * W / 4]].forEach(function (pair) {
+        var nm = pair[0].name.toUpperCase(), f = '900 84px ' + SANS; x.font = f;
+        var fs = Math.min(84, Math.floor(84 * (W / 2 - 80) / Math.max(1, x.measureText(nm).width)));
+        txt(nm, pair[1], hHead + 100, '900 ' + fs + 'px ' + SANS, '#ffffff', 'center');
+      });
+      x.fillStyle = INK; x.beginPath(); x.arc(W / 2, hHead + 100, 40, 0, Math.PI * 2); x.fill();
+      txt('v', W / 2, hHead + 98, '900 40px ' + SANS, '#ffffff', 'center');
+      txt('Tonight\'s teams · ' + lu.A.length + ' v ' + lu.B.length, W / 2, hHead + 196, '700 36px ' + SANS, 'rgba(255,255,255,.95)', 'center');
+    } else {
     // result band: the score in games, big
-    var winT = nr.winner === 'A' ? A : nr.winner === 'B' ? B : null, hi = Math.max(nr.A, nr.B), lo = Math.min(nr.A, nr.B);
-    x.fillStyle = winT ? winT.color : '#3a3a3a'; x.fillRect(0, hHead, W, hRes);
-    var head = !nr.played ? 'RESULTS' : nr.winner === 'D' ? (nr.open ? 'LEVEL ' : 'DRAW ') + hi + '–' + lo : winT.name.toUpperCase() + (nr.open ? ' LEAD ' : ' WIN ') + hi + '–' + lo;
-    var hf = '900 112px ' + SANS; x.font = hf; var hs = Math.min(112, Math.floor(112 * (W - 2 * P) / Math.max(1, x.measureText(head).width)));
-    txt(head, P, hHead + 100, '900 ' + hs + 'px ' + SANS, '#ffffff');
-    if (nr.played) {
-      var by = hi - lo, sub = nr.winner === 'D' ? 'Level on games' : (nr.open ? 'Leading' : 'Won the night') + ' by ' + by + ' game' + (by === 1 ? '' : 's');
-      txt(sub + ' · ' + nr.played + ' game' + (nr.played === 1 ? '' : 's') + ' played' + (nr.open ? ' · still playing' : ''), P, hHead + 196, '700 36px ' + SANS, 'rgba(255,255,255,.92)');
+      // the result, centred: who won (or drew), the scoreline in games big in the middle, then how
+      var winT = nr.winner === 'A' ? A : nr.winner === 'B' ? B : null, hi = Math.max(nr.A, nr.B), lo = Math.min(nr.A, nr.B);
+      x.fillStyle = winT ? winT.color : '#3a3a3a'; x.fillRect(0, hHead, W, hRes);
+      var C = W / 2;
+      var head = !nr.played ? 'RESULTS' : nr.winner === 'D' ? (nr.open ? 'ALL LEVEL SO FAR' : 'NIGHT DRAWN') : winT.name.toUpperCase() + (nr.open ? ' LEAD' : ' WIN');
+      x.font = '900 60px ' + SANS; var hs = Math.min(60, Math.floor(60 * (W - 2 * P) / Math.max(1, x.measureText(head).width)));
+      txt(head, C, hHead + 62, '900 ' + hs + 'px ' + SANS, '#ffffff', 'center');
+      if (nr.played) {
+        // scoreline: Bibs 2 – 1 Non Bibs, numbers big in the middle, each team name beside its own number
+        var NUM = '900 132px ' + SANS, NAME = '800 40px ' + SANS, sy = hHead + 175;
+        txt('–', C, sy, NUM, 'rgba(255,255,255,.85)', 'center');
+        txt(String(nr.A), C - 70, sy, NUM, '#ffffff', 'right');
+        txt(String(nr.B), C + 70, sy, NUM, '#ffffff', 'left');
+        x.font = NUM; var wA = x.measureText(String(nr.A)).width, wB = x.measureText(String(nr.B)).width;
+        var room = C - 70 - Math.max(wA, wB) - 28 - P;
+        txt(fit(A.name, room, NAME), C - 70 - wA - 28, sy + 6, NAME, 'rgba(255,255,255,.95)', 'right');
+        txt(fit(B.name, room, NAME), C + 70 + wB + 28, sy + 6, NAME, 'rgba(255,255,255,.95)', 'left');
+        var by = hi - lo, sub = nr.winner === 'D' ? 'Level on games' : (nr.open ? 'Leading' : 'Won the night') + ' by ' + by + ' game' + (by === 1 ? '' : 's');
+        txt(sub + ' · ' + nr.played + ' game' + (nr.played === 1 ? '' : 's') + ' played' + (nr.open ? ' · still playing' : ''), C, hHead + 290, '700 34px ' + SANS, 'rgba(255,255,255,.92)', 'center');
+      }
     }
     // line-ups
     var y0 = hHead + hRes; x.fillStyle = PAPER; x.fillRect(0, y0, W, hLine + hGames + hFoot);
@@ -749,6 +830,7 @@
         txt(a + '–' + b, W / 2, cy, '900 36px ' + SANS, INK, 'center');
         txt(B.name, W / 2 + 70, cy, (b > a ? '800' : '500') + ' 32px ' + SANS, b > a ? B.color : INK, 'left');
         if (g.status === 'live') txt('LIVE', W - P - 20, cy, '800 22px ' + SANS, '#d93025', 'right');
+        else if (gameTime(g) != null) txt(fmtDur(gameTime(g)), W - P - 20, cy, '700 24px ' + SANS, MUTED, 'right');
       });
     }
     // footer
@@ -757,24 +839,25 @@
     return c;
   }
   var shareFile = null;
-  async function shareSheet(w) {
-    shareFile = null;
-    openSheet('<h2>Send to WhatsApp</h2><p class="muted" id="sh-status">Making the results card…</p><div id="sh-card"></div><div class="row" id="sh-btns"></div>', 'Send to WhatsApp');
+  async function shareSheet(w, mode) {
+    shareFile = null; S.shareMode = mode || 'results';
+    var teams = mode === 'teams', what = teams ? 'teams' : 'results';
+    openSheet('<h2>' + (teams ? 'Send teams to WhatsApp' : 'Send to WhatsApp') + '</h2><p class="muted" id="sh-status">Making the ' + (teams ? 'team sheet' : 'results card') + '…</p><div id="sh-card"></div><div class="row" id="sh-btns"></div>', teams ? 'Send teams to WhatsApp' : 'Send to WhatsApp');
     var c;
-    try { c = await renderCard(w); } catch (e) { $('#sh-status').textContent = 'The picture couldn\'t be made, but you can still send the results as text.'; }
+    try { c = await renderCard(w, mode); } catch (e) { $('#sh-status').textContent = 'The picture couldn\'t be made, but you can still send the ' + what + ' as text.'; }
     var blob = c ? await new Promise(function (r) { c.toBlob(r, 'image/png'); }) : null;
     if (!$('#sh-btns')) return; // sheet closed meanwhile
-    var name = 'western-ballers-' + w.id + '.png', url = blob ? URL.createObjectURL(blob) : '';
+    var name = 'western-ballers-' + (teams ? 'teams-' : '') + w.id + '.png', url = blob ? URL.createObjectURL(blob) : '';
     if (blob) { try { shareFile = new File([blob], name, { type: 'image/png' }); } catch (e) { shareFile = null; } }
     var canShare = !!(shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] }));
     if (blob) {
-      $('#sh-card').innerHTML = '<img class="share-card" src="' + url + '" alt="Results card for ' + esc(fmtDate(w.id, true)) + '">';
-      $('#sh-status').textContent = canShare ? 'Tap Share, choose WhatsApp, then your group. The results go with it as a message.' : 'Save the picture (or press and hold it), then send it in your WhatsApp group. Open WhatsApp sends the results as text.';
+      $('#sh-card').innerHTML = '<img class="share-card" src="' + url + '" alt="' + (teams ? 'Team sheet' : 'Results card') + ' for ' + esc(fmtDate(w.id, true)) + '">';
+      $('#sh-status').textContent = canShare ? 'Tap Share, choose WhatsApp, then your group. The ' + what + ' go with it as a message.' : 'Save the picture (or press and hold it), then send it in your WhatsApp group. Open WhatsApp sends the ' + what + ' as text.';
     }
     $('#sh-btns').innerHTML = (canShare ? '<button class="btn wa" data-action="share-go">Share</button>' : '') +
       (blob && !canShare ? '<a class="btn" href="' + url + '" download="' + name + '">Save picture</a>' : '') +
-      '<a class="btn' + (canShare ? '' : ' wa') + '" href="' + esc(waLink(w)) + '" target="_blank" rel="noopener">Open WhatsApp' + (blob ? ' (text only)' : '') + '</a>' +
-      '<button class="btn" data-action="copy-stats">Copy text</button><span class="spacer"></span><button class="btn" data-action="close">Close</button>';
+      '<a class="btn' + (canShare ? '' : ' wa') + '" href="' + esc(waLink(w, mode)) + '" target="_blank" rel="noopener">Open WhatsApp' + (blob ? ' (text only)' : '') + '</a>' +
+      '<button class="btn" data-action="' + (teams ? 'copy-teams' : 'copy-stats') + '">Copy text</button><span class="spacer"></span><button class="btn" data-action="close">Close</button>';
   }
 
   /* Backups: the server keeps a copy every 10 minutes while things change, and before anything is deleted. */
@@ -836,7 +919,11 @@
         var id = t.dataset.wid;
         direct({ op: 'deleteWeek', id: id }, function () { if (S.weekId === id) S.weekId = null; closeSheet(); toast('Night deleted'); }).catch(function () {});
       }); break;
-      case 'toggle-pick': S.picking = !S.picking; render(); break;
+      case 'toggle-pick': {
+        var wasPicking = S.picking; S.picking = !S.picking; render();
+        if (wasPicking && w && teamsPicked(w)) shareSheet(w, 'teams'); // teams picked: make the team sheet for the group
+        break;
+      }
       case 'squad': if (w) act([{ t: 'setSquad', wid: w.id, pid: t.dataset.pid, side: t.dataset.side || '' }]); break;
       case 'toggle-paid': {
         var pid = t.dataset.pid, pw = S.weeks.find(function (x) { return x.id === t.dataset.wid; });
@@ -888,8 +975,14 @@
         toast('Goal deleted.' + (dr.undo === 'reopened' ? ' The game is back on.' : dr.undo === 'kept' ? ' The game stays finished because the next one has started.' : ''));
       }); break;
       case 'share-wa': if (w) shareSheet(w); break;
+      case 'share-teams': if (w) shareSheet(w, 'teams'); break;
+      case 'copy-teams': if (w) {
+        var tt = teamsText(w);
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tt).then(function () { toast('Teams copied. Paste them anywhere.'); }, function () { toast('Couldn\'t copy here. Use Open WhatsApp instead.'); });
+        else toast('Couldn\'t copy here. Use Open WhatsApp instead.');
+      } break;
       case 'share-go': if (w && shareFile) {
-        navigator.share({ files: [shareFile], text: statsText(w, true) }).catch(function (e) {
+        navigator.share({ files: [shareFile], text: S.shareMode === 'teams' ? teamsText(w, true) : statsText(w, true) }).catch(function (e) {
           if (e && e.name === 'AbortError') return;
           navigator.share({ files: [shareFile] }).catch(function () { toast('Couldn\'t open sharing here. Save the picture and send it in WhatsApp.'); });
         });

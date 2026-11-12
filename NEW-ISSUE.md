@@ -49,7 +49,7 @@ Add the new issue at the **top** (newest first):
 - `type` is `Pre-match` or `Full-time`.
 - Leave `"standfirst": ""` when the issue has none.
 - `cover.src` is the issue's lead photo: the homepage photo and the source of the link-preview image.
-- `cover.focus` is where the subject sits in the photo, as `[x, y]` from 0 to 1 (`[0, 0]` is the top-left corner, `[0.5, 0.5]` the middle). The wide link-preview crop is centred there. Leave it out to centre on the middle.
+- `cover.focus` is where the subject sits in the photo, as `[x, y]` from 0 to 1 (`[0, 0]` is the top-left corner, `[0.5, 0.5]` the middle). The wide link-preview crop is centred there, and the homepage photo and the Previous issues cards keep that point in frame. Leave it out to centre on the middle.
 
 ### Optional: a video
 

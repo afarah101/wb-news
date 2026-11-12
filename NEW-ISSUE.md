@@ -1,3 +1,5 @@
+Read CLAUDE.md first.
+
 # Adding a new issue (every Thursday)
 
 An **issue** is one Thursday's edition. `issues.json` is the only list of issues: the menu, the Previous / Next links, the homepage and the link-preview image (WhatsApp) are all built from it.

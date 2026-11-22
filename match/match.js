@@ -334,12 +334,12 @@
     return true;
   }
 
-  function payChip(w, pid) {
+  function payChip(w, pid, from) { // admins tap it to switch between Owes and Paid, either way
     var fee = +w.fee || 0; if (!fee) return '';
     var paid = !!(w.paid && w.paid[pid]);
     var txt = paid ? 'Paid' : 'Owes ' + money(fee);
     return S.admin
-      ? '<button class="pay ' + (paid ? 'paid' : 'owes') + '" data-action="toggle-paid" data-pid="' + esc(pid) + '" data-wid="' + esc(w.id) + '" aria-pressed="' + paid + '" title="Tap to change">' + txt + '</button>'
+      ? '<button class="pay ' + (paid ? 'paid' : 'owes') + '" data-action="toggle-paid" data-pid="' + esc(pid) + '" data-wid="' + esc(w.id) + '"' + (from ? ' data-from="' + from + '"' : '') + ' aria-pressed="' + paid + '" title="Tap to change">' + txt + '</button>'
       : '<span class="pay ' + (paid ? 'paid' : 'owes') + '">' + txt + '</span>';
   }
 
@@ -545,7 +545,7 @@
       var t = teamOf(w, e.side);
       var r = e.res.length ? e.res.map(function (x) { return '<span class="form"><i class="' + x.r + '">' + x.r + '</i></span> <span class="num">' + x.mine + '–' + x.theirs + ' games</span>'; }).join(' &nbsp;') : '<span class="muted">No result</span>';
       var ga = [e.g ? e.g + ' goal' + (e.g === 1 ? '' : 's') : '', e.a ? e.a + ' assist' + (e.a === 1 ? '' : 's') : ''].filter(Boolean).join(', ');
-      return '<li><span class="num" style="min-width:96px">' + fmtDate(e.wid) + '</span><span class="row" style="flex:1;gap:6px"><span class="dot" style="--team:' + t.color + '"></span>' + esc(t.name) + '</span><span>' + r + '</span>' +
+      return '<li><span class="num" style="min-width:96px">' + fmtDate(e.wid) + '</span><span class="row" style="flex:1;gap:6px"><span class="dot" style="--team:' + t.color + '"></span>' + esc(t.name) + '</span><span>' + r + '</span>' + payChip(w, pid, 'sheet') +
         (ga ? '<span class="num muted" style="flex-basis:100%;font-size:14px">' + ga + '</span>' : '') + '</li>';
     }).join('');
     var unpaid = s.unpaid.map(function (wid) {
@@ -561,7 +561,7 @@
       '<div class="row"><span class="label">Form</span>' + formHtml(s.form) + '</div>' +
       '<div><div class="row"><span class="label">Subs</span><span class="spacer"></span>' + (s.owed ? '<span class="pay owes">Owes ' + money(s.owed) + '</span>' : '<span class="pay paid">All paid</span>') + '</div>' +
       (unpaid ? '<ul class="log" style="margin-top:8px">' + unpaid + '</ul>' + (S.admin && s.unpaid.length > 1 ? '<button class="btn sm" data-action="pay-all" data-pid="' + esc(pid) + '" style="margin-top:8px">Mark all paid</button>' : '') : '') + '</div>' +
-      (log ? '<div><div class="label">Week by week</div><ul class="log" style="margin-top:8px">' + log + '</ul></div>' : '') +
+      (log ? '<div><div class="label">Week by week</div>' + (S.admin ? '<p class="muted" style="font-size:13px;margin-top:4px">Tap Paid or Owes on a night to change it.</p>' : '') + '<ul class="log" style="margin-top:8px">' + log + '</ul></div>' : '') +
       '<div class="row">' + (S.admin && p.own && !p.former ? '<button class="btn" data-action="edit-player" data-pid="' + esc(pid) + '">Edit profile</button>' : '') + (p.former ? '<span class="muted" style="font-size:14px">No longer in the squad</span>' : '') +
       (!p.own && !p.former ? '<a class="mc-link" href="../squad/#' + encodeURIComponent(pid) + '">Squad profile</a>' : '') +
       '<span class="spacer"></span><button class="btn" data-action="close">Close</button></div>', pName(p));
@@ -936,7 +936,7 @@
       case 'pay-all': {
         var id = t.dataset.pid;
         act(S.stats[id].unpaid.map(function (wid) { return { t: 'setPaid', wid: wid, pid: id, paid: true }; }));
-        playerSheet(id); toast('All nights marked paid'); break;
+        playerSheet(id); toast('All nights marked paid. Tap Paid on a night under Week by week to undo.'); break;
       }
       case 'pick-game': S.gameK = t.dataset.k; render(); break;
       case 'retry-now': retryDelay = 2000; S.saveErr = S.saveErr === 'retry' ? 'retry' : S.saveErr; flush(); poll(true); break;

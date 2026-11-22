@@ -23,25 +23,6 @@
 <link rel="preload" href="https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/issue.css">
-<style>
-.h3d{position:relative;background:var(--ink);color:var(--on-ink)}
-.h3d.live{height:200vh;height:200svh} /* the stage pins for one screen of scroll */
-.h3d-stage{position:relative;display:flex;flex-direction:column;height:100vh;height:100svh;overflow:hidden}
-.h3d.live .h3d-stage{position:sticky;top:0}
-.h3d canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0}
-.h3d.gl canvas{opacity:1}
-.h3d.gl .h3d-ball{display:none}
-.h3d-word{position:relative;flex:1;display:flex;align-items:center;justify-content:center;gap:0 .18em;font-family:var(--serif);font-weight:800;font-size:min(17vw,30vh);line-height:.8;letter-spacing:-.04em;user-select:none;-webkit-user-select:none}
-.h3d-word span{display:block}
-.h3d-news{color:var(--wb)}
-.h3d-ball{position:absolute;inset:0;margin:auto;height:min(70%,50vw);aspect-ratio:1}
-.h3d-ball .s{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round} .h3d-ball .w{fill:var(--paper)} .h3d-ball .o{fill:var(--wb)}
-.h3d-card{position:relative;z-index:2;align-self:flex-start;width:min(100% - 2 * var(--gutter),520px);margin:0 0 var(--s3) max(var(--gutter),calc((100% - var(--page)) / 2 + var(--gutter)));padding:var(--s3);background:var(--paper);color:var(--ink)}
-.h3d-h{display:block;margin-top:var(--s1);font-family:var(--serif);font-weight:700;font-size:var(--t-h3);line-height:1.1;letter-spacing:-.015em;text-decoration:none;text-wrap:balance;overflow-wrap:anywhere}
-.h3d-card .cta{margin-top:var(--s2)}
-@media (hover:hover) and (pointer:fine){.h3d-h:hover{text-decoration:underline}}
-@media (max-width:600px){.h3d-word{flex-direction:column;font-size:30vw;line-height:.78}}
-</style>
 <link rel="canonical" href="https://wb-news.vercel.app/">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
@@ -63,23 +44,6 @@
     <div class="tags"><span class="pill">PRE-MATCH</span><span>THURSDAY SESSION</span><span>12 NOV</span></div>
   </div>
 </header>
-
-<section class="h3d" aria-label="Latest issue">
-  <div class="h3d-stage">
-    <div class="h3d-word" aria-hidden="true"><span class="h3d-wb">WB</span><span class="h3d-news">NEWS</span>
-      <svg class="h3d-ball" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="h3d-clip"><circle cx="50" cy="50" r="48"/></clipPath></defs>
-      <circle class="w" cx="50" cy="50" r="48"/><g clip-path="url(#h3d-clip)"><polygon class="o s" points="50.0,35.0 64.3,45.4 58.8,62.1 41.2,62.1 35.7,45.4"/><polygon class="o s" points="50.0,19.0 37.6,10.0 42.4,-4.5 57.6,-4.5 62.4,10.0"/><polygon class="o s" points="79.5,40.4 84.2,25.9 99.5,25.9 104.2,40.4 91.8,49.4"/><polygon class="o s" points="68.2,75.1 83.5,75.1 88.2,89.6 75.9,98.6 63.5,89.6"/><polygon class="o s" points="31.8,75.1 36.5,89.6 24.1,98.6 11.8,89.6 16.5,75.1"/><polygon class="o s" points="20.5,40.4 8.2,49.4 -4.2,40.4 0.5,25.9 15.8,25.9"/><polyline class="s" points="50.0,35.0 50.0,19.0"/><polyline class="s" points="62.4,10.0 84.2,25.9"/><polyline class="s" points="64.3,45.4 79.5,40.4"/><polyline class="s" points="91.8,49.4 83.5,75.1"/><polyline class="s" points="58.8,62.1 68.2,75.1"/><polyline class="s" points="63.5,89.6 36.5,89.6"/><polyline class="s" points="41.2,62.1 31.8,75.1"/><polyline class="s" points="16.5,75.1 8.2,49.4"/><polyline class="s" points="35.7,45.4 20.5,40.4"/><polyline class="s" points="15.8,25.9 37.6,10.0"/></g>
-      <circle class="s" cx="50" cy="50" r="48"/></svg>
-    </div>
-    <div class="h3d-card">
-      <div class="kick">LATEST ISSUE · PRE-MATCH</div>
-      <a class="h3d-h" href="issues/2026-11-12/#story">Luqman v Mo Sudz: bromance or breaking point?</a>
-      <a class="cta" href="issues/2026-11-12/#story">Read the full story
-        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-    </div>
-  </div>
-</section>
 
 <main class="home">
   <section class="home-lead">
@@ -140,6 +104,5 @@
 </main>
 
 <script src="assets/menu.js"></script>
-<script type="module" src="components/Hero3D.mjs"></script>
 </body>
 </html>

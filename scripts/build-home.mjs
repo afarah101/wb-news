@@ -1,10 +1,9 @@
 // Builds the homepage (index.html) from issues.json: the newest issue leads, then the videos, then older issues.
 // It also makes the link-preview images (assets/og/). Vercel runs this on every deploy (vercel.json): npm ci, then this script.
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { hero, heroCSS } from '../components/Hero3D.mjs';
 
 const SITE = 'https://wb-news.vercel.app'; // link previews (WhatsApp) need full addresses
 const root = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.url)), '..'));
@@ -32,14 +31,6 @@ issues.forEach((it, i) => {
   }
   check(i === 0 || it.date < issues[i - 1].date, at + 'issues must be listed newest first'); // the menu reads the same order
 });
-
-// ---------- three.js for the homepage hero (components/Hero3D.mjs): copied from node_modules on every build, so it is not committed ----------
-const threeDir = join(dirname(fileURLToPath(import.meta.url)), '../node_modules/three/build'); // installed next to this script, like sharp
-mkdirSync(join(root, 'assets/vendor'), { recursive: true });
-for (const f of ['three.module.min.js', 'three.core.min.js']) {
-  check(existsSync(join(threeDir, f)), `node_modules/three/build/${f} is missing: run npm ci`);
-  copyFileSync(join(threeDir, f), join(root, 'assets/vendor', f));
-}
 
 // ---------- link-preview images: a 1200x630 JPG of each cover, centred on cover.focus ([x, y] from 0 to 1, default the middle) ----------
 // Made on every build (Vercel included), so they are not committed.
@@ -106,7 +97,6 @@ ${lines([
 <link rel="preload" href="https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/issue.css">
-<style>${heroCSS}</style>
 <link rel="canonical" href="${SITE}/">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
@@ -128,7 +118,6 @@ ${lines([
     <div class="tags"><span class="pill">${esc(latest.type.toUpperCase())}</span><span>THURSDAY SESSION</span><span>${esc(dayMonth(latest).toUpperCase())}</span></div>
   </div>
 </header>
-${hero({ href: story(latest), kicker: `LATEST ISSUE · ${esc(latest.type.toUpperCase())}`, title: esc(latest.title) })}
 
 <main class="home">
   <section class="home-lead">
@@ -177,7 +166,6 @@ ${previous.map((it) => `      <a class="card" href="${story(it)}">
 </main>
 
 <script src="assets/menu.js"></script>
-<script type="module" src="components/Hero3D.mjs"></script>
 </body>
 </html>
 `;

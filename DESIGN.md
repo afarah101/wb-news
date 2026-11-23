@@ -226,7 +226,7 @@ Motion is rare and earns its place. The page has three kinds.
 - **Feedback** (150 to 200ms): button press, hover arrow, row tint, pressed phone.
 - **Panels** (200 to 240ms): the drawer and its scrim open in 240ms and close in 200ms.
 - **The one authored moment** (about 2.2s, once per session): the crest opening on the homepage. Shield outline draws (0 to 0.7s); the five stars drop in, outer pair first and centre last, on a light spring (0.5 to 1.3s); WB rises and settles (0.9 to 1.6s); the ribbon unrolls left to right (1.4 to 2.0s); the ribbon text fades in (1.8 to 2.2s). Then the lead headline reveals word by word (about 0.6s).
-- **Scroll-linked:** the crest's shrink into the masthead is tied 1:1 to scroll position over the hero's height. It has no duration of its own.
+- **Scroll-linked:** the crest's dock into the masthead is tied 1:1 to scroll position over the hero's height, in two straight legs. For the first 60% it shrinks to logo size and slides into the logo's column, just under the masthead rule. Then it rises straight into the logo spot, so it never crosses the wordmark. It has no duration of its own.
 
 ### Easing
 - **`--ease`** (`cubic-bezier(.16,1,.3,1)`): the house curve for every CSS transition. Exponential ease-out: quick start, soft landing.
@@ -238,8 +238,9 @@ Motion is rare and earns its place. The page has three kinds.
 - `prefers-reduced-motion: reduce` removes all movement: no crest opening, no scroll docking, no headline reveal, no live-dot pulse, no lift or scale on press. The finished crest and the full headline show at once.
 - State still shows: pressed controls dim to 85% opacity and the drawer cross-fades in 150ms.
 - Without JavaScript the page looks exactly like the reduced-motion version. Nothing starts hidden unless a script that will reveal it is already running.
+- If the animation script has not started 1.5s after the hero is parsed (slow network, blocked script), the page drops to the finished crest and the full headline.
 
 ### Named Rules
 **The One Moment Rule.** One authored sequence per page. Everything else is feedback.
 
-**The Any-Input-Skips Rule.** A scroll, tap or key press during the opening jumps straight to the finished crest.
+**The Any-Input-Skips Rule.** A scroll, tap or key press during the opening jumps straight to the finished crest, and the headline shows at once with no reveal.

@@ -28,14 +28,18 @@ const css = `
 `;
 
 // ---------- <head>: decide before first paint, so the finished crest never flashes and then hides ----------
-// Failsafe: if the module has not started within 4s (blocked or slow script), drop every class: finished crest, visible headline.
-const head = `(function(){var d=document.documentElement;try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var seen=false;try{seen=sessionStorage.getItem('wb-crest')==='1'}catch(e){}d.classList.add('ch-js');if(!seen)d.classList.add('ch-play','ch-hold');setTimeout(function(){if(!d.classList.contains('ch-live'))d.classList.remove('ch-js','ch-play','ch-hold')},4000)}catch(e){}})();`;
+const head = `(function(){var d=document.documentElement;try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var seen=false;try{seen=sessionStorage.getItem('wb-crest')==='1'}catch(e){}d.classList.add('ch-js');if(!seen)d.classList.add('ch-play','ch-hold')}catch(e){}})();`;
 
-export const crestHeroHead = () => `<style>${css.replace(/\n\s*/g, '')}</style>\n<script>${head}</script>`;
+// Failsafe, started as the hero is parsed (about first paint): if the module has not started within 1.5s (blocked or slow script),
+// drop every class: finished crest, visible headline. Nothing stays blank for long. The anime file is preloaded from <head>.
+const failsafe = `setTimeout(function(){var d=document.documentElement;if(!d.classList.contains('ch-live'))d.classList.remove('ch-js','ch-play','ch-hold')},1500);`;
+
+export const crestHeroHead = () => `<link rel="modulepreload" href="${ANIME_VENDOR}">\n<style>${css.replace(/\n\s*/g, '')}</style>\n<script>${head}</script>`;
 
 export const crestHero = (svg) => `  <div class="crest-hero">
     <span class="ch-mark">${svg.trim()}</span>
-  </div>`;
+  </div>
+  <script>${failsafe}</script>`;
 
 // ---------- client script: anime.js v4 (createTimeline, createDrawable, onScroll, splitText) ----------
 const client = `
@@ -85,11 +89,13 @@ if (d.classList.contains('ch-js') && svg && logo && h1) try {
     utils.set(mono, { opacity: 0 });
     utils.set(ribbon, { clipPath: 'inset(0% 100% 0% 0%)' });
     utils.set(text, { opacity: 0 });
+    let skipped = false;
     const done = () => {
       ['wheel', 'touchstart', 'pointerdown', 'keydown', 'scroll'].forEach((t) => removeEventListener(t, skip));
       d.classList.remove('ch-play');
       performance.mark('crest-opening-end');
-      revealOnEnter();
+      // a skip means "show me the page": the headline appears at once; it still reveals if it enters view later
+      if (skipped && inView(h1)) { revealed = true; d.classList.remove('ch-hold'); } else revealOnEnter();
     };
     performance.mark('crest-opening-start');
     const opening = createTimeline({ defaults: { ease: 'out(4)' }, onComplete: done })
@@ -100,7 +106,7 @@ if (d.classList.contains('ch-js') && svg && logo && h1) try {
       .add(mono, { opacity: [0, 1], translateY: [28, 0], duration: 700 }, 900)
       .add(ribbon, { clipPath: ['inset(0% 100% 0% 0%)', 'inset(0% 0% 0% 0%)'], duration: 600, ease: 'inOut(3)' }, 1400)
       .add(text, { opacity: [0, 1], duration: 400, ease: 'linear' }, 1800);
-    function skip() { if (!opening.completed) opening.complete(); }
+    function skip() { if (!opening.completed) { skipped = true; opening.complete(); } }
     ['wheel', 'touchstart', 'pointerdown', 'keydown', 'scroll'].forEach((t) => addEventListener(t, skip, { passive: true }));
   } else if (!inView(h1)) {
     d.classList.add('ch-hold');
@@ -109,16 +115,22 @@ if (d.classList.contains('ch-js') && svg && logo && h1) try {
     revealed = true;
   }
 
-  // scroll: the crest shrinks into the masthead logo spot over the hero's height, 1:1 with the scroll
+  // scroll: the crest docks in the masthead logo spot over the hero's height, 1:1 with the scroll, in two straight legs.
+  // Leg 1 (first 60%): it shrinks to logo size and slides into the logo's column, staying just under the masthead rule.
+  // Leg 2: it rises straight up into the logo spot, so it never crosses the wordmark. Each leg is linear in screen space.
   const top = () => mark.getBoundingClientRect().top + scrollY;
+  const LEG = 600; // of 1000
   let g;
   const measure = () => {
     const m = mark.getBoundingClientRect(), l = logo.getBoundingClientRect(), dist = hero.offsetHeight;
-    g = { dist, x: l.left - m.left, y: l.top - (m.top + scrollY) + dist, k: l.width / m.width };
+    const below = document.querySelector('.top').getBoundingClientRect().bottom + 8; // just under the 4px rule
+    const doc = m.top + scrollY;
+    g = { dist, x: l.left - m.left, k: l.width / m.width, y1: below - doc + dist * LEG / 1000, y2: l.top - doc + dist };
   };
   measure();
+  const leg = (a, b) => [{ to: a, duration: LEG, ease: 'linear' }, { to: b, duration: 1000 - LEG, ease: 'linear' }];
   const dock = animate(svg, {
-    translateX: () => g.x, translateY: () => g.y, scale: () => g.k,
+    translateX: leg(() => g.x, () => g.x), translateY: leg(() => g.y1, () => g.y2), scale: leg(() => g.k, () => g.k),
     ease: 'linear', duration: 1000,
     onRender: (a) => d.classList.toggle('ch-docked', a.progress >= 0.999),
     autoplay: onScroll({ target: mark, enter: () => ({ target: 0, container: top() }), leave: () => ({ target: 0, container: top() - g.dist }), sync: true }),

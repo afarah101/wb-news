@@ -37,7 +37,7 @@ const failsafe = `setTimeout(function(){var d=document.documentElement;if(!d.cla
 export const crestHeroHead = () => `<link rel="modulepreload" href="${ANIME_VENDOR}">\n<style>${css.replace(/\n\s*/g, '')}</style>\n<script>${head}</script>`;
 
 export const crestHero = (svg) => `  <div class="crest-hero">
-    <span class="ch-mark">${svg.trim()}</span>
+    <span class="ch-mark">${svg.trim().replace('<svg ', '<svg aria-hidden="true" focusable="false" ')}</span>
   </div>
   <script>${failsafe}</script>`;
 
@@ -128,15 +128,24 @@ if (d.classList.contains('ch-js') && svg && logo && h1) try {
     g = { dist, x: l.left - m.left, k: l.width / m.width, y1: below - doc + dist * LEG / 1000, y2: l.top - doc + dist };
   };
   measure();
-  const leg = (a, b) => [{ to: a, duration: LEG, ease: 'linear' }, { to: b, duration: 1000 - LEG, ease: 'linear' }];
+  // Every keyframe has a from FUNCTION. anime's refresh() re-reads a tween's start from the element's current
+  // transform unless from is a function; a refresh while docked (the iOS address bar showing or hiding fires
+  // resize) would make the docked state the new start, and the crest would stay small at the top of the page.
+  const leg = (from, a, b) => [{ from: () => from, to: a, duration: LEG, ease: 'linear' }, { from: a, to: b, duration: 1000 - LEG, ease: 'linear' }];
+  const sync = onScroll({
+    target: mark, sync: true,
+    // anime rounds these edges but not the target's own offset; with a fractional offset (1440: masthead 102.97px)
+    // the progress at scroll 0 would be 0.00008, not 0. Floor the start and ceil the end: exactly 0 at the top, 1 docked.
+    enter: () => ({ target: 0, container: Math.floor(top()) }), leave: () => ({ target: 0, container: Math.ceil(top() - g.dist) }),
+  });
   const dock = animate(svg, {
-    translateX: leg(() => g.x, () => g.x), translateY: leg(() => g.y1, () => g.y2), scale: leg(() => g.k, () => g.k),
+    translateX: leg(0, () => g.x, () => g.x), translateY: leg(0, () => g.y1, () => g.y2), scale: leg(1, () => g.k, () => g.k),
     ease: 'linear', duration: 1000,
     onRender: (a) => d.classList.toggle('ch-docked', a.progress >= 0.999),
-    autoplay: onScroll({ target: mark, enter: () => ({ target: 0, container: top() }), leave: () => ({ target: 0, container: top() - g.dist }), sync: true }),
+    autoplay: sync,
   });
   let t;
-  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { measure(); dock.refresh(); }, 150); }, { passive: true });
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { measure(); dock.refresh(); sync.refresh(); }, 150); }, { passive: true });
 } catch (e) {
   fail();
 } else if (d.classList.contains('ch-js')) {

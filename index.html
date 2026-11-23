@@ -50,7 +50,7 @@
 
 <main class="home">
   <div class="crest-hero">
-    <span class="ch-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="44 14 280 344" role="img" aria-labelledby="wbcrest-t">
+    <span class="ch-mark"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="44 14 280 344" role="img" aria-labelledby="wbcrest-t">
   <title id="wbcrest-t">Western Ballers FC crest</title>
   <g id="shield"><path d="M184,24 Q120,62 55,66 C55,200 100,300 184,350 C268,300 313,200 313,66 Q248,62 184,24 Z" fill="#FFFFFF" stroke="#F26B1D" stroke-width="3" stroke-linejoin="round"/></g>
   <g id="stars" fill="#F26B1D">
@@ -211,15 +211,24 @@ if (d.classList.contains('ch-js') && svg && logo && h1) try {
     g = { dist, x: l.left - m.left, k: l.width / m.width, y1: below - doc + dist * LEG / 1000, y2: l.top - doc + dist };
   };
   measure();
-  const leg = (a, b) => [{ to: a, duration: LEG, ease: 'linear' }, { to: b, duration: 1000 - LEG, ease: 'linear' }];
+  // Every keyframe has a from FUNCTION. anime's refresh() re-reads a tween's start from the element's current
+  // transform unless from is a function; a refresh while docked (the iOS address bar showing or hiding fires
+  // resize) would make the docked state the new start, and the crest would stay small at the top of the page.
+  const leg = (from, a, b) => [{ from: () => from, to: a, duration: LEG, ease: 'linear' }, { from: a, to: b, duration: 1000 - LEG, ease: 'linear' }];
+  const sync = onScroll({
+    target: mark, sync: true,
+    // anime rounds these edges but not the target's own offset; with a fractional offset (1440: masthead 102.97px)
+    // the progress at scroll 0 would be 0.00008, not 0. Floor the start and ceil the end: exactly 0 at the top, 1 docked.
+    enter: () => ({ target: 0, container: Math.floor(top()) }), leave: () => ({ target: 0, container: Math.ceil(top() - g.dist) }),
+  });
   const dock = animate(svg, {
-    translateX: leg(() => g.x, () => g.x), translateY: leg(() => g.y1, () => g.y2), scale: leg(() => g.k, () => g.k),
+    translateX: leg(0, () => g.x, () => g.x), translateY: leg(0, () => g.y1, () => g.y2), scale: leg(1, () => g.k, () => g.k),
     ease: 'linear', duration: 1000,
     onRender: (a) => d.classList.toggle('ch-docked', a.progress >= 0.999),
-    autoplay: onScroll({ target: mark, enter: () => ({ target: 0, container: top() }), leave: () => ({ target: 0, container: top() - g.dist }), sync: true }),
+    autoplay: sync,
   });
   let t;
-  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { measure(); dock.refresh(); }, 150); }, { passive: true });
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { measure(); dock.refresh(); sync.refresh(); }, 150); }, { passive: true });
 } catch (e) {
   fail();
 } else if (d.classList.contains('ch-js')) {

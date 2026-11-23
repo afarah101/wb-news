@@ -37,10 +37,21 @@ Shared rules: do not touch `match/`, `api/`, `data/`, `components/CrestHero.mjs`
   - CLS across open and close: 0 at 390, 0 at 1440. Console errors: 0.
   - Reduced motion: 0 view-transition animations, profile shown at once.
 
-## T4 — Page transitions
-- [ ] Cross-document view transitions between the homepage, issue pages, Squad and 404: a short fade, the masthead crest held still. Not in `match/`.
-- [ ] Reduced motion: none. Unsupported browsers: normal loads.
-- Checks: frames mid-transition home → issue → squad; `match/` byte-identical; no console errors.
+## T4 — Page transitions — DONE
+- [x] New `assets/transitions.css`: `@view-transition{navigation:auto}` inside `@media (prefers-reduced-motion:no-preference)`. The root cross-fade is 200ms. The masthead crest (`.brand img`, name `wb-crest`) has no animation, so it stays still and sharp while the page fades.
+- [x] Linked only from the pages in the ticket: the homepage (`scripts/build-home.mjs` template, then `npm run build`), the 5 issues, `squad/index.html` and `404.html`.
+  - Choice: not in `assets/issue.css`, because the Match Centre loads that file too. The Match Centre never opts in, and `match/` is untouched.
+- [x] `assets/menu.js`: a page going to `/match/` skips its transition in `pageswap`. Without this, Chrome aborts the half-made transition and logs a console error on the Match Centre.
+- [x] Reduced motion: no transition. Browsers without cross-document View Transitions ignore the rule and load pages normally.
+- Checks (headless Chromium 390×844, mid frames at 50%):
+  - home → issue: `::view-transition-group(root)` runs (old/new 200ms); 3 runs out of 3.
+  - issue → squad: runs.
+  - squad → Match Centre: no transition, no transition error.
+  - Also checked: home → squad, issue → home, squad → home, issue → issue (previous / next), and the homepage scrolled 0 / 60 / 184 / 400px (crest docking): all transition.
+  - Reduced motion: no transition on any navigation.
+  - `git diff main -- match/`: empty (byte-identical).
+  - Console errors on the changed pages: 0. The only error in the chain is the Match Centre's `GET /api/match` 404, which happens because the local static server has no API; it is the same on `main` and unrelated to this ticket.
+  - With T3, the crest also stays still while a squad card opens.
 
 ## Verify (all tickets)
 - [ ] Each ticket's checks with evidence in this file.

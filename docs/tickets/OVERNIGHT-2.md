@@ -36,6 +36,8 @@ Shared rules: do not touch `match/`, `api/`, `data/`, `components/CrestHero.mjs`
   - Focus: after opening, `H1 "Ragz"`; after Escape, `#card-ragz` (focus ring visible). Hash cleared, profile hidden.
   - CLS across open and close: 0 at 390, 0 at 1440. Console errors: 0.
   - Reduced motion: 0 view-transition animations, profile shown at once.
+  - Reduced motion, 390 and 1440: `startViewTransition` called 0 times; 16ms after the tap the profile is fully shown (0 animations, focus on the H1); 16ms after Escape the list is back (0 animations, focus on `#card-ragz`).
+  - Black cards, cut-outs and data unchanged: full-page screenshots of the Squad list and the Ragz profile at 390 and 1440 are pixel-identical to `main` (4 of 4).
 
 ## T4 — Page transitions — DONE
 - [x] New `assets/transitions.css`: `@view-transition{navigation:auto}` inside `@media (prefers-reduced-motion:no-preference)`. The root cross-fade is 200ms. The masthead crest (`.brand img`, name `wb-crest`) has no animation, so it stays still and sharp while the page fades.
@@ -48,7 +50,7 @@ Shared rules: do not touch `match/`, `api/`, `data/`, `components/CrestHero.mjs`
   - issue → squad: runs.
   - squad → Match Centre: no transition, no transition error.
   - Also checked: home → squad, issue → home, squad → home, issue → issue (previous / next), and the homepage scrolled 0 / 60 / 184 / 400px (crest docking): all transition.
-  - Reduced motion: no transition on any navigation.
+  - Reduced motion: no transition on any navigation (`pagereveal` gives no `viewTransition` for squad → home and home → issue, at 390 and 1440).
   - `git diff main -- match/`: empty (byte-identical).
   - Console errors on the changed pages: 0. The only error in the chain is the Match Centre's `GET /api/match` 404, which happens because the local static server has no API; it is the same on `main` and unrelated to this ticket.
   - With T3, the crest also stays still while a squad card opens.
@@ -60,3 +62,8 @@ Run on this branch (port 8080) against `main` (worktree, port 8081): 10 page sta
 - [x] `npm run build` passes. Console errors: 0. Sideways scroll at 320 / 375: none. undefined / null / NaN: none. CLS (cold load, motion on): max 0.0011.
 - [x] `/impeccable audit` on the changed pages: **0 P0, 0 P1**, 0 P2, 3 P3; score 16/20 (Good). The missing-transcript P1 is resolved (WCAG 1.2.1 passes; summary text 18.7:1, highlighted name 6.15:1 on the black panel; keyboard Enter/Space opens and closes it). The detector found no new findings compared with `main`. The 3 P3s all predate this branch: the profile h1 gets focus with no visible ring; `security.jpg` loads eagerly and is a JPEG; `#000` and the chrome sizes are outside the tokens. Also noted (not counted, needs a listen): the two Watch videos have no captions track.
 - [x] `git diff --name-only main`: `404.html`, `assets/issue.css`, `assets/menu.js`, `assets/transitions.css`, `docs/tickets/OVERNIGHT-2.md`, `index.html` (build output), the 5 `issues/*/index.html`, `scripts/build-home.mjs`, `squad/index.html`, `squad/squad.css`, `squad/squad.js`. All are ticket files; `match/`, `api/`, `data/`, `components/CrestHero.mjs`, `.env` and `CLAUDE.md` are untouched.
+
+## Open items for Ahmed (outside the four tickets)
+- T1 wording: confirm the transcript's opening words, "…and blame your football. Football, body." No player name was guessed.
+- Watch videos (`assets/video/2026-10-15.mp4`, `2026-10-22.mp4`): checked with the same Whisper small model. Both **do contain speech** (pitch-side shouting and dialogue over music, e.g. "All right, boys, boys, no time", "2-2", "It's three in three"). They have no `<track kind="captions">`, which WCAG 1.2.2 (level A) requires. This predates this branch, and captions are not part of these tickets, so nothing was changed. Suggested next ticket: a WebVTT captions file for each video.
+- Already on `main` (audit P3): the profile heading shows no focus ring when it takes focus; `security.jpg` is a JPEG and loads eagerly.

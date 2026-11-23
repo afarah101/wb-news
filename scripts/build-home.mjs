@@ -1,9 +1,10 @@
 // Builds the homepage (index.html) from issues.json: the newest issue leads, then the videos, then older issues.
 // It also makes the link-preview images (assets/og/). Vercel runs this on every deploy (vercel.json): npm ci, then this script.
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
+import { ANIME_DIST, ANIME_VENDOR, crestHero, crestHeroHead, crestHeroScript } from '../components/CrestHero.mjs';
 
 const SITE = 'https://wb-news.vercel.app'; // link previews (WhatsApp) need full addresses
 const root = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.url)), '..'));
@@ -49,6 +50,13 @@ for (const it of issues) {
     .jpeg({ quality: 82 }).toFile(out);
   check(statSync(out).size <= OG.max, `${og(it)} is over 300 KB`);
 }
+
+// ---------- crest hero: the approved crest inline, and the one anime.js file it needs (assets/vendor/, not committed) ----------
+check(file('assets/wb-crest.svg'), 'assets/wb-crest.svg is missing');
+check(file(ANIME_DIST), `${ANIME_DIST} is missing: run npm ci`);
+const crest = readFileSync(join(root, 'assets/wb-crest.svg'), 'utf8');
+mkdirSync(join(root, 'assets/vendor'), { recursive: true });
+copyFileSync(join(root, ANIME_DIST), join(root, ANIME_VENDOR));
 
 // ---------- helpers ----------
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -101,6 +109,7 @@ ${lines([
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
+${crestHeroHead()}
 </head>
 <body>
 
@@ -111,7 +120,7 @@ ${lines([
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <a class="brand" href="./">
-        <img src="crest.png" alt="Western Ballers FC crest">
+        <img src="assets/wb-crest.svg" width="40" height="49" alt="Western Ballers FC crest">
         <span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span>
       </a>
     </div>
@@ -120,6 +129,7 @@ ${lines([
 </header>
 
 <main class="home">
+${crestHero(crest)}
   <section class="home-lead">
     <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"${focus(latest)}></a>
     <div class="home-copy">
@@ -161,11 +171,12 @@ ${previous.map((it) => `      <a class="card" href="${story(it)}">
 ])}
 
   <footer class="foot">
-    <div class="foot-brand"><img src="crest.png" alt=""><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
+    <div class="foot-brand"><img src="assets/wb-crest.svg" width="32" height="39" alt=""><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
   </footer>
 </main>
 
 <script src="assets/menu.js"></script>
+${crestHeroScript()}
 </body>
 </html>
 `;

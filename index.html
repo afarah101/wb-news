@@ -27,6 +27,9 @@
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="modulepreload" href="assets/vendor/anime.esm.min.js">
+<style>.crest-hero{display:flex;justify-content:center;height:calc(var(--s10) * 2 + var(--s3));padding-top:var(--s3)}.ch-mark{display:block;height:calc(var(--s10) * 2);aspect-ratio:280/344}.ch-mark svg{position:relative;z-index:6;display:block;width:100%;height:100%;overflow:visible;transform-origin:0 0;pointer-events:none}.ch-mark #stars path,.ch-mark #monogram,.ch-mark #ribbon-text{transform-box:fill-box;transform-origin:50% 50%}@media (min-width:901px){.crest-hero{height:calc(var(--s10) * 4 + var(--s4));padding-top:var(--s4)}.ch-mark{height:calc(var(--s10) * 4)}.ch-js{scroll-padding-top:calc(var(--s10) + var(--s3))}}/* motion mode only (set in <head> before first paint): the masthead stays put so the crest has somewhere to dock */.ch-js{scroll-padding-top:calc(var(--s10) + var(--s1))} /* keyboard focus never lands under the pinned masthead */.ch-js .top{position:sticky;top:0;z-index:5;background:var(--paper)}.ch-js:not(.ch-docked) .brand img{visibility:hidden}.ch-docked .ch-mark svg{visibility:hidden}.ch-play:not(.ch-live) .ch-mark svg > g{opacity:0}.ch-hold .home-lead h1{opacity:0}</style>
+<script>(function(){var d=document.documentElement;try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var seen=false;try{seen=sessionStorage.getItem('wb-crest')==='1'}catch(e){}d.classList.add('ch-js');if(!seen)d.classList.add('ch-play','ch-hold')}catch(e){}})();</script>
 </head>
 <body>
 
@@ -37,7 +40,7 @@
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <a class="brand" href="./">
-        <img src="crest.png" alt="Western Ballers FC crest">
+        <img src="assets/wb-crest.svg" width="40" height="49" alt="Western Ballers FC crest">
         <span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span>
       </a>
     </div>
@@ -46,6 +49,25 @@
 </header>
 
 <main class="home">
+  <div class="crest-hero">
+    <span class="ch-mark"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="44 14 280 344" role="img" aria-labelledby="wbcrest-t">
+  <title id="wbcrest-t">Western Ballers FC crest</title>
+  <g id="shield"><path d="M184,24 Q120,62 55,66 C55,200 100,300 184,350 C268,300 313,200 313,66 Q248,62 184,24 Z" fill="#FFFFFF" stroke="#F26B1D" stroke-width="3" stroke-linejoin="round"/></g>
+  <g id="stars" fill="#F26B1D">
+    <path d="M136.50,79.60 L138.93,84.86 L144.68,85.54 L140.43,89.48 L141.55,95.16 L136.50,92.33 L131.45,95.16 L132.57,89.48 L128.32,85.54 L134.07,84.86 Z"/><path d="M158.50,73.80 L161.83,81.02 L169.72,81.95 L163.89,87.35 L165.44,95.15 L158.50,91.26 L151.56,95.15 L153.11,87.35 L147.28,81.95 L155.17,81.02 Z"/><path d="M185.00,67.60 L189.23,76.78 L199.27,77.96 L191.85,84.82 L193.82,94.74 L185.00,89.80 L176.18,94.74 L178.15,84.82 L170.73,77.96 L180.77,76.78 Z"/><path d="M211.50,73.80 L214.83,81.02 L222.72,81.95 L216.89,87.35 L218.44,95.15 L211.50,91.26 L204.56,95.15 L206.11,87.35 L200.28,81.95 L208.17,81.02 Z"/><path d="M233.50,79.60 L235.93,84.86 L241.68,85.54 L237.43,89.48 L238.55,95.16 L233.50,92.33 L228.45,95.16 L229.57,89.48 L225.32,85.54 L231.07,84.86 Z"/>
+  </g>
+  <g id="monogram" fill="#F26B1D"><path d="M175.91 119.62 215.97 119.00V129.58L207.13 132.04L182.39 206.00H158.24L140.42 151.49L121.87 206.00H98.01L75.04 132.54L66.50 130.20V119.62L108.62 119.00V129.58L100.81 132.17L112.30 177.57L130.56 119.62L153.97 119.00L171.94 178.07L185.34 132.66L175.91 130.20Z M267.26 161.58Q271.53 162.07 275.36 162.93Q283.16 164.78 287.58 169.21Q292.00 173.64 292.00 181.51Q292.00 189.51 287.29 194.99Q282.58 200.46 273.37 203.23Q264.17 206.00 250.91 206.00H205.56V195.42L215.42 192.59V132.91L205.56 130.20V119.62L239.87 119.00H253.57Q264.32 119.00 272.05 121.21Q279.78 123.43 283.97 128.17Q288.17 132.91 288.17 140.66Q288.17 151.36 279.92 156.78Q275.07 159.98 267.26 161.58ZM248.56 190.99Q252.98 190.99 256.95 190.19Q260.93 189.39 263.43 187.05Q265.93 184.71 265.93 179.79Q265.93 175.24 263.73 172.96Q261.52 170.68 258.35 169.94Q255.18 169.21 252.24 169.21H241.05V190.99ZM248.56 133.89H241.05V154.44H245.47Q249.74 154.44 253.64 153.70Q257.54 152.96 259.97 150.63Q262.40 148.29 262.40 143.73Q262.40 139.43 260.41 137.34Q258.42 135.24 255.26 134.57Q252.09 133.89 248.56 133.89Z"/></g>
+  <g id="ribbon" fill="#F26B1D" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round" paint-order="stroke">
+    <path id="ribbon-tail-left" d="M104,236 C103,229 109,226 118,226 L143,224 C153,223 156,236 147,239 L110,239 C106,239 104,238 104,236 Z"/>
+    <path id="ribbon-curl-left" d="M92,270 C78,262 80,240 100,239 L138,239 C150,239 152,251 145,256 C130,258 110,262 92,270 Z"/>
+    <path id="ribbon-tail-right" d="M205,292 L247,300 C253,301 257,306 254,309 L213,308 C206,307 203,299 205,292 Z"/>
+    <path id="ribbon-fold-right" d="M200,274 L268,270 C290,272 292,298 278,301 L236,299 C218,297 206,292 200,286 Z"/>
+    <path id="ribbon-band" d="M90,259 C150,240 250,212 284,241 C289,252 289,272 284,283 C250,254 150,282 90,301 C85,290 85,270 90,259 Z"/>
+  </g>
+  <g id="ribbon-text" fill="#121212"><path d="M103.39 280.11 98.44 273.04 100.32 272.47 103.77 277.45 103.94 271.37 105.63 270.86 109.11 275.87 109.25 269.76 110.98 269.23 110.80 277.86 108.85 278.45 105.51 273.66 105.34 279.52Z M116.81 276.07 114.52 268.20 120.47 266.47 120.90 267.93 116.76 269.13 117.26 270.84 120.91 269.78 121.32 271.20 117.67 272.26 118.20 274.08 122.48 272.83 122.91 274.30Z M129.20 272.66Q128.26 272.93 127.32 272.92Q126.38 272.91 125.73 272.65L125.97 271.10Q126.58 271.32 127.33 271.35Q128.09 271.39 128.80 271.19Q129.34 271.04 129.65 270.84Q129.95 270.64 130.05 270.40Q130.16 270.17 130.09 269.92Q130.00 269.60 129.70 269.49Q129.40 269.37 128.96 269.36Q128.52 269.36 128.00 269.39Q127.48 269.42 126.95 269.40Q126.41 269.38 125.93 269.25Q125.46 269.11 125.09 268.78Q124.72 268.44 124.55 267.81Q124.36 267.13 124.57 266.47Q124.78 265.81 125.42 265.27Q126.07 264.73 127.18 264.42Q127.93 264.21 128.70 264.18Q129.47 264.15 130.12 264.35L129.95 265.89Q129.31 265.73 128.71 265.74Q128.11 265.74 127.58 265.89Q127.05 266.04 126.75 266.25Q126.45 266.47 126.36 266.71Q126.26 266.95 126.34 267.21Q126.42 267.51 126.72 267.63Q127.02 267.75 127.46 267.75Q127.90 267.75 128.42 267.72Q128.94 267.70 129.47 267.71Q130.01 267.71 130.48 267.85Q130.96 267.98 131.33 268.32Q131.69 268.65 131.87 269.27Q132.05 269.94 131.84 270.60Q131.62 271.25 130.98 271.80Q130.33 272.34 129.20 272.66Z M137.59 270.21 135.86 263.78 133.33 264.46 132.93 262.97 139.83 261.11 140.23 262.61 137.70 263.29 139.42 269.71Z M145.18 268.19 143.16 260.24 149.16 258.71 149.54 260.19 145.36 261.25 145.80 262.98 149.49 262.04 149.86 263.47 146.17 264.41 146.64 266.25 150.96 265.14 151.34 266.62Z M155.03 265.71 153.12 257.73 156.52 256.92Q158.19 256.52 159.29 257.07Q160.40 257.61 160.72 258.97Q160.94 259.86 160.67 260.60Q160.40 261.35 159.71 261.87Q159.70 261.88 159.70 261.89L162.09 264.01L160.09 264.49L158.04 262.64Q157.99 262.65 157.95 262.66L156.34 263.04L156.87 265.26ZM155.99 261.57 157.49 261.21Q158.35 261.01 158.68 260.54Q159.01 260.07 158.86 259.42Q158.70 258.76 158.19 258.49Q157.68 258.23 156.83 258.43L155.32 258.79Z M165.66 263.19 163.89 255.19 165.43 254.85 170.48 258.84 169.41 253.97 171.24 253.57 173.00 261.58 171.48 261.91 166.42 257.93 167.49 262.79Z M182.60 259.63 181.11 251.57 185.05 250.84Q186.57 250.56 187.44 250.99Q188.31 251.42 188.49 252.37Q188.61 253.00 188.38 253.52Q188.18 254.00 187.76 254.33Q187.88 254.35 187.99 254.37Q188.62 254.51 189.04 254.93Q189.46 255.36 189.59 256.06Q189.78 257.10 189.07 257.83Q188.36 258.56 186.77 258.86ZM184.20 257.88 186.37 257.48Q187.10 257.34 187.43 257.04Q187.76 256.73 187.66 256.21Q187.57 255.71 187.15 255.53Q186.73 255.35 186.00 255.48L183.83 255.89ZM183.58 254.53 185.43 254.19Q186.11 254.06 186.43 253.76Q186.75 253.45 186.66 252.97Q186.57 252.50 186.16 252.33Q185.76 252.16 185.08 252.28L183.22 252.63Z M192.52 257.82 194.86 249.15 196.71 248.86 201.60 256.39 199.64 256.70 198.65 255.07 194.89 255.66 194.44 257.51ZM197.83 253.74 196.06 250.84 195.26 254.15Z M204.66 255.98 203.63 247.84 205.51 247.60 206.35 254.20 210.43 253.68 210.63 255.22Z M213.83 254.87 213.05 246.71 214.94 246.53 215.57 253.15 219.66 252.76 219.81 254.30Z M223.12 254.06 222.67 245.87 228.86 245.53 228.95 247.05 224.64 247.29 224.74 249.06 228.54 248.86 228.62 250.33 224.82 250.54 224.92 252.43 229.38 252.19 229.46 253.71Z M233.08 253.60 233.08 245.40 236.58 245.40Q238.29 245.40 239.24 246.19Q240.19 246.98 240.19 248.37Q240.19 249.28 239.76 249.95Q239.32 250.61 238.53 250.96Q238.52 250.96 238.52 250.97L240.35 253.59L238.30 253.60L236.72 251.31Q236.68 251.31 236.63 251.31L234.98 251.31L234.98 253.60ZM234.98 249.80 236.52 249.80Q237.40 249.80 237.84 249.42Q238.27 249.04 238.27 248.37Q238.27 247.69 237.84 247.32Q237.40 246.94 236.52 246.94L234.98 246.94Z M246.42 254.06Q245.44 253.99 244.56 253.67Q243.68 253.34 243.15 252.88L243.90 251.50Q244.40 251.91 245.10 252.20Q245.80 252.49 246.54 252.54Q247.10 252.58 247.45 252.49Q247.80 252.40 247.98 252.22Q248.16 252.03 248.17 251.77Q248.20 251.45 247.95 251.24Q247.71 251.02 247.30 250.87Q246.88 250.72 246.38 250.58Q245.88 250.43 245.39 250.23Q244.89 250.03 244.49 249.75Q244.08 249.46 243.85 249.02Q243.62 248.58 243.66 247.93Q243.71 247.23 244.13 246.67Q244.55 246.12 245.34 245.83Q246.13 245.54 247.28 245.62Q248.05 245.67 248.79 245.90Q249.53 246.14 250.07 246.54L249.39 247.93Q248.84 247.57 248.28 247.37Q247.72 247.17 247.17 247.14Q246.62 247.10 246.26 247.20Q245.90 247.31 245.73 247.50Q245.57 247.70 245.55 247.96Q245.53 248.28 245.77 248.49Q246.01 248.70 246.43 248.85Q246.84 248.99 247.34 249.14Q247.84 249.30 248.34 249.48Q248.84 249.67 249.24 249.96Q249.64 250.24 249.88 250.68Q250.11 251.12 250.07 251.76Q250.02 252.45 249.59 253.00Q249.17 253.54 248.38 253.84Q247.59 254.14 246.42 254.06Z M258.50 255.36 260.29 247.36 266.34 248.72 266.00 250.20 261.81 249.26 261.34 251.38 265.04 252.21 264.70 253.69 261.00 252.86 260.35 255.78Z M270.98 259.13Q270.09 258.78 269.45 258.19Q268.81 257.60 268.46 256.85Q268.12 256.10 268.09 255.25Q268.07 254.41 268.41 253.55Q268.75 252.69 269.34 252.10Q269.94 251.50 270.71 251.19Q271.48 250.88 272.35 250.88Q273.21 250.89 274.11 251.25Q275.10 251.64 275.76 252.30Q276.43 252.96 276.71 253.84L275.16 254.44Q274.95 253.83 274.56 253.42Q274.17 253.01 273.60 252.78Q273.07 252.57 272.55 252.57Q272.03 252.57 271.58 252.77Q271.12 252.96 270.77 253.34Q270.41 253.71 270.19 254.26Q269.98 254.80 269.98 255.32Q269.98 255.84 270.18 256.29Q270.38 256.75 270.76 257.10Q271.13 257.45 271.67 257.66Q272.23 257.89 272.80 257.85Q273.37 257.82 273.94 257.52L274.66 259.01Q273.85 259.46 272.92 259.49Q271.98 259.52 270.98 259.13Z"/></g>
+</svg></span>
+  </div>
+  <script>setTimeout(function(){var d=document.documentElement;if(!d.classList.contains('ch-live'))d.classList.remove('ch-js','ch-play','ch-hold')},1500);</script>
   <section class="home-lead">
     <a class="home-photo" href="issues/2026-11-12/#story" tabindex="-1" aria-hidden="true"><img src="issues/2026-11-12/soods-hanad.jpg" alt="" fetchpriority="high" style="object-position:50% 25%"></a>
     <div class="home-copy">
@@ -99,10 +121,118 @@
   </section>
 
   <footer class="foot">
-    <div class="foot-brand"><img src="crest.png" alt=""><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
+    <div class="foot-brand"><img src="assets/wb-crest.svg" width="32" height="39" alt=""><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
   </footer>
 </main>
 
 <script src="assets/menu.js"></script>
+<script type="module">import { animate, createTimeline, createDrawable, onScroll, splitText, spring, stagger, utils } from './assets/vendor/anime.esm.min.js';
+const d = document.documentElement;
+const hero = document.querySelector('.crest-hero');
+const mark = hero && hero.querySelector('.ch-mark');
+const svg = mark && mark.querySelector('svg');
+const logo = document.querySelector('.brand img');
+const h1 = document.querySelector('.home-lead h1');
+// start after the first paint and its busy task, so the opening's first frames are not held up
+await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+// any failure: back to the finished crest and the plain headline
+const fail = () => {
+  d.classList.remove('ch-js', 'ch-play', 'ch-hold', 'ch-docked');
+  [svg, ...svg.querySelectorAll('*'), ...h1.querySelectorAll('*')].forEach((n) => { n.removeAttribute('style'); n.removeAttribute('stroke-dasharray'); n.removeAttribute('stroke-dashoffset'); });
+};
+if (d.classList.contains('ch-js') && svg && logo && h1) try {
+  d.classList.add('ch-live');
+  const inView = (el) => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; };
+
+  // lead headline: word by word, once
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    try {
+      const { words } = splitText(h1, { words: true });
+      utils.set(words, { opacity: 0, translateY: '0.3em' });
+      d.classList.remove('ch-hold');
+      animate(words, { opacity: 1, translateY: 0, duration: 520, delay: stagger(40), ease: 'out(4)' });
+    } catch (e) { fail(); }
+  };
+  const revealOnEnter = () => (inView(h1) ? reveal() : onScroll({ target: h1, onEnter: reveal }));
+
+  // opening, once per session
+  if (d.classList.contains('ch-play')) {
+    try { sessionStorage.setItem('wb-crest', '1'); } catch (e) {}
+    const [shield] = createDrawable(svg.querySelector('#shield path'));
+    const s = svg.querySelectorAll('#stars path');
+    const mono = svg.querySelector('#monogram');
+    const ribbon = svg.querySelector('#ribbon');
+    const text = svg.querySelector('#ribbon-text');
+    const drop = { opacity: [0, 1], translateY: [-40, 0], ease: spring({ bounce: 0.35, duration: 420 }) };
+    utils.set(shield, { draw: '0 0' });
+    utils.set(s, { opacity: 0 });
+    utils.set(mono, { opacity: 0 });
+    utils.set(ribbon, { clipPath: 'inset(0% 100% 0% 0%)' });
+    utils.set(text, { opacity: 0 });
+    let skipped = false;
+    const done = () => {
+      ['wheel', 'touchstart', 'pointerdown', 'keydown', 'scroll'].forEach((t) => removeEventListener(t, skip));
+      d.classList.remove('ch-play');
+      performance.mark('crest-opening-end');
+      // a skip means "show me the page": the headline appears at once; it still reveals if it enters view later
+      if (skipped && inView(h1)) { revealed = true; d.classList.remove('ch-hold'); } else revealOnEnter();
+    };
+    performance.mark('crest-opening-start');
+    const opening = createTimeline({ defaults: { ease: 'out(4)' }, onComplete: done })
+      .add(shield, { draw: ['0 0', '0 1'], duration: 700, ease: 'inOut(2)' }, 0)
+      .add([s[0], s[4]], drop, 500)
+      .add([s[1], s[3]], drop, 640)
+      .add(s[2], drop, 780)
+      .add(mono, { opacity: [0, 1], translateY: [28, 0], duration: 700 }, 900)
+      .add(ribbon, { clipPath: ['inset(0% 100% 0% 0%)', 'inset(0% 0% 0% 0%)'], duration: 600, ease: 'inOut(3)' }, 1400)
+      .add(text, { opacity: [0, 1], duration: 400, ease: 'linear' }, 1800);
+    function skip() { if (!opening.completed) { skipped = true; opening.complete(); } }
+    ['wheel', 'touchstart', 'pointerdown', 'keydown', 'scroll'].forEach((t) => addEventListener(t, skip, { passive: true }));
+  } else if (!inView(h1)) {
+    d.classList.add('ch-hold');
+    revealOnEnter();
+  } else {
+    revealed = true;
+  }
+
+  // scroll: the crest docks in the masthead logo spot over the hero's height, 1:1 with the scroll, in two straight legs.
+  // Leg 1 (first 60%): it shrinks to logo size and slides into the logo's column, staying just under the masthead rule.
+  // Leg 2: it rises straight up into the logo spot, so it never crosses the wordmark. Each leg is linear in screen space.
+  const top = () => mark.getBoundingClientRect().top + scrollY;
+  const LEG = 600; // of 1000
+  let g;
+  const measure = () => {
+    const m = mark.getBoundingClientRect(), l = logo.getBoundingClientRect(), dist = hero.offsetHeight;
+    const below = document.querySelector('.top').getBoundingClientRect().bottom + 8; // just under the 4px rule
+    const doc = m.top + scrollY;
+    g = { dist, x: l.left - m.left, k: l.width / m.width, y1: below - doc + dist * LEG / 1000, y2: l.top - doc + dist };
+  };
+  measure();
+  // Every keyframe has a from FUNCTION. anime's refresh() re-reads a tween's start from the element's current
+  // transform unless from is a function; a refresh while docked (the iOS address bar showing or hiding fires
+  // resize) would make the docked state the new start, and the crest would stay small at the top of the page.
+  const leg = (from, a, b) => [{ from: () => from, to: a, duration: LEG, ease: 'linear' }, { from: a, to: b, duration: 1000 - LEG, ease: 'linear' }];
+  const sync = onScroll({
+    target: mark, sync: true,
+    // anime rounds these edges but not the target's own offset; with a fractional offset (1440: masthead 102.97px)
+    // the progress at scroll 0 would be 0.00008, not 0. Floor the start and ceil the end: exactly 0 at the top, 1 docked.
+    enter: () => ({ target: 0, container: Math.floor(top()) }), leave: () => ({ target: 0, container: Math.ceil(top() - g.dist) }),
+  });
+  const dock = animate(svg, {
+    translateX: leg(0, () => g.x, () => g.x), translateY: leg(0, () => g.y1, () => g.y2), scale: leg(1, () => g.k, () => g.k),
+    ease: 'linear', duration: 1000,
+    onRender: (a) => d.classList.toggle('ch-docked', a.progress >= 0.999),
+    autoplay: sync,
+  });
+  let t;
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { measure(); dock.refresh(); sync.refresh(); }, 150); }, { passive: true });
+} catch (e) {
+  fail();
+} else if (d.classList.contains('ch-js')) {
+  d.classList.remove('ch-js', 'ch-play', 'ch-hold');
+}</script>
 </body>
 </html>

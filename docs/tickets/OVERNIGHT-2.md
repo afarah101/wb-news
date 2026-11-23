@@ -54,8 +54,9 @@ Shared rules: do not touch `match/`, `api/`, `data/`, `components/CrestHero.mjs`
   - With T3, the crest also stays still while a squad card opens.
 
 ## Verify (all tickets)
-- [ ] Each ticket's checks with evidence in this file.
-- [ ] innerText diff vs `main` = only the T1 transcript.
-- [ ] `npm run build` passes; 0 console errors; no sideways scroll at 320/375; no undefined/null/NaN.
-- [ ] `/impeccable audit` on changed pages: 0 P0, 0 P1.
-- [ ] `git diff --name-only main` lists only ticket files.
+Run on this branch (port 8080) against `main` (worktree, port 8081): 10 page states (home, 5 issues incl. both #story views, Squad, 404) × 320 / 375 / 390 / 1440.
+- [x] Each ticket's checks with evidence: see T1–T4 above.
+- [x] innerText diff vs `main`: 40 files, 4 differ, all on the 5 Nov story (one per width), each by exactly one added line: "Read the transcript" (the T1 summary; the transcript text shows when opened).
+- [x] `npm run build` passes. Console errors: 0. Sideways scroll at 320 / 375: none. undefined / null / NaN: none. CLS (cold load, motion on): max 0.0011.
+- [ ] `/impeccable audit` on the changed pages: AUDIT_RESULT
+- [x] `git diff --name-only main`: `404.html`, `assets/issue.css`, `assets/menu.js`, `assets/transitions.css`, `docs/tickets/OVERNIGHT-2.md`, `index.html` (build output), the 5 `issues/*/index.html`, `scripts/build-home.mjs`, `squad/index.html`, `squad/squad.css`, `squad/squad.js`. All are ticket files; `match/`, `api/`, `data/`, `components/CrestHero.mjs`, `.env` and `CLAUDE.md` are untouched.

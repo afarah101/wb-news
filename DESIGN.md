@@ -43,14 +43,28 @@ typography:
     fontFamily: "Newsreader, Georgia, Times New Roman, serif"
     fontSize: "18px"
     fontWeight: 600
-    lineHeight: 1.25
+    lineHeight: 1.3
     letterSpacing: "-0.005em"
   standfirst:
     fontFamily: "Newsreader, Georgia, Times New Roman, serif"
     fontSize: "20px"
     fontWeight: 400
     lineHeight: 1.35
+  read:
+    fontFamily: "Newsreader, Georgia, Times New Roman, serif"
+    fontSize: "20px"
+    fontWeight: 400
+    lineHeight: 1.6
+  button:
+    fontFamily: "Roboto, -apple-system, Helvetica Neue, Arial, sans-serif"
+    fontSize: "18px"
+    fontWeight: 700
   body:
+    fontFamily: "Roboto, -apple-system, Helvetica Neue, Arial, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.4
+  small:
     fontFamily: "Roboto, -apple-system, Helvetica Neue, Arial, sans-serif"
     fontSize: "14px"
     fontWeight: 400
@@ -60,6 +74,15 @@ typography:
     fontSize: "12px"
     fontWeight: 800
     letterSpacing: "0.12em"
+  micro:
+    fontFamily: "Roboto, -apple-system, Helvetica Neue, Arial, sans-serif"
+    fontSize: "11px"
+    fontWeight: 700
+  figure:
+    fontFamily: "Newsreader, Georgia, Times New Roman, serif"
+    fontSize: "40px"
+    fontWeight: 700
+    lineHeight: 1
 rounded:
   hairline: "2px"
   phone: "40px"
@@ -148,19 +171,28 @@ The headline scale is one set of tokens (`--t-display` to `--t-h4`) that steps u
 - **Headline** (700, 40 / 48 / 56px, 1.04): page and article headlines, the homepage lead, player names on profiles.
 - **Section** (700, 28 / 32 / 36px, 1.15): section heads, pull quotes, the Match Centre date.
 - **Title** (700, 24 / 24 / 28px): phone headline, the lead story row, squad card names.
-- **Story** (600, 18 / 20 / 20px, 1.25): story rows, cards, next and previous links.
-- **Standfirst** (400, 20px, 22px from 521px, 1.35): the deck under a headline.
-- **Body** (400, 14 to 16px, 1.4 to 1.5): meta, captions, list text. Article body sits at the 672px reading width.
-- **Label** (800, 12px, 0.12em, uppercase, 87.5% width): kickers, section labels, tags. Never smaller than 11px.
+- **Story** (600, 18 / 20 / 20px, 1.3): story rows, cards, next and previous links, profile facts. Raised from 1.25 in the type and spacing pass: these rows wrap to two or three lines on phones.
+- **Standfirst** (`--t-lede`, 400, 20px, 22px from 521px, 1.35): the standfirst and the cover deck.
+- **Read** (`--t-read`, Newsreader 400, 20px, 1.6): article body at the 672px reading width. One line is 32px, so paragraphs and every other block in the story sit `--s4` apart.
+- **Figure** (`--t-figure`, Newsreader 700, 40px, 1): big numerals (score, ratings) and the phone mock-up's drop cap. The article drop cap is `calc(var(--t-read) * 3.6)` at 0.8.
+- **Button** (`--t-button`, Roboto 700, 18px): the primary button label.
+- **Body** (`--t-body`, 400, 16px, 1.4 to 1.5): UI text, table text, profile lines.
+- **Small** (`--t-small`, 400, 14px, 1.4): meta, captions, the chyron, hints, footer links.
+- **Label** (`--t-label`, 800, 12px, 0.12em, uppercase, 87.5% width): kickers, section labels, tags.
+- **Micro** (`--t-micro`, 700, 11px): the floor. Phone mock-up furniture, the masthead strap, drawer dates and the debut chip.
+
+**Fallback faces.** Inside the page containers (`.art`, `.cover`, `.home`, `.sq`) the stacks (`--serif`, `--sans`, and `--serif-display` for page headlines) put a metric-matched fallback second: Times New Roman (Liberation Serif on Linux) and Arial (Liberation Sans) with `size-adjust` per weight (fitted by line count on every page, because Newsreader's optical-size axis changes its width with size), so text wraps the same before and after the web fonts arrive. Added in the type and spacing pass to keep CLS at or below 0.02 on slow connections. The masthead and drawer keep the plain stack because the Match Centre shares them unchanged.
 
 ### Named Rules
 **The Printed Headline Rule.** A headline stays exactly as printed. Emphasis inside it is `em` in club orange at the headline's own weight.
 
-**The One Scale Rule.** Headline sizes come only from the `--t-*` tokens. No one-off font sizes for headings.
+**The One Scale Rule.** Every font size comes from a `--t-*` token. No one-off font sizes. The one exception is the shared site chrome (masthead wordmark 22/28px, footer wordmark 18px, drawer date 22px, drawer title and error line 15px), which the Match Centre renders too and keeps unchanged.
+
+**The Headline Rhythm Rule.** On every page type: kicker to headline `--s1`, headline to standfirst `--s2`, standfirst to meta `--s3`. On phones the button follows the standfirst at `--s2` so it stays on the first screen.
 
 ## Layout
 
-One centred container (`--page`, 1200px) with a 16px gutter on phones and 24px from 521px. Reading text is capped at `--read` (672px). Spacing runs on an 8px scale (`--s1` 8px to `--s10` 80px) with a 4px half-step for chips only.
+One centred container (`--page`, 1200px) with a 16px gutter on phones and 24px from 521px. Reading text is capped at `--read` (672px). Spacing runs on an 8px scale (`--s1` 8px to `--s10` 80px) with a 4px half-step for chips only (and the two wordmark straps in the shared chrome). Section spacing is at least `--s6` on phones and `--s8` on desktop: homepage rows `--s7` / `--s10`, story breaks `--s8` / `--s10`, squad groups `--s6` / `--s8`, previous / next `--s6` / `--s8`. The squad grid uses `--s3` gaps and `--s3` card padding at every width; profile tiles keep 1px gaps, which draw the hairlines between them. The gap above the first squad group is padding on the grid box, not a margin on the group, so the box does not move when `players.json` arrives.
 
 Phones get one column, and the headline and the primary button must sit on the first screen. From 901px the homepage lead splits 5 / 7 (photo, then copy) and the cover splits phone mock-up and story list. The homepage opens with the crest hero, then the lead story, then the Watch row (a sideways swipe with snap), then three previous issues.
 

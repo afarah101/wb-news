@@ -17,9 +17,12 @@ Shared rules: do not touch `match/`, `api/`, `data/`, `components/CrestHero.mjs`
 - **Unsure (for Ahmed):** the opening "…and blame your football. Football, body." The clip starts mid-sentence and the speech is fast over background noise. "body" may be a nickname or another word. No player name was guessed.
 - Checks: transcript present (closed by default, 48px summary, opens on tap: frames in the PR evidence); the audit's missing-transcript P1 is re-checked in the final audit (see Verify).
 
-## T2 — Photo sizes (all issues)
-- [ ] Every `<img>` in `issues/*/index.html` gets `width` and `height` from the real file. No alt, src or text changes.
-- Checks: 0 `<img>` without width/height; slow-media CLS on 5 Nov ≤ 0.02; innerText unchanged.
+## T2 — Photo sizes (all issues) — DONE
+- [x] 16 `<img>` tags had no size: 10 crests (`crest.png`, 240×293) in mastheads, phone mock-ups and footers, plus 6 photos: `nappy.jpg` 1200×1600 (×2), `security.jpg` 1600×893, `soods-hanad.jpg` 896×1174. Each now has `width` and `height` read from the file with Pillow, inserted after `src`. No alt, src, class or text changed.
+- Checks:
+  - `<img>` without width/height in `issues/*/index.html`: **0** (was 16).
+  - Slow-media CLS (images delayed 1.5s) on 5 Nov story: **0 / 0 / 0 / 0** at 375 / 390 / 1440, 0.0002 at 320 (was 0.48 / 0.69 / 0.50 / 0.15 on `main`).
+  - innerText and the rendered box of every image, 7 page states × 4 widths: **56 of 56 files identical** before and after.
 
 ## T3 — Squad profile transition
 - [ ] In `squad/` only: a tapped card grows into the open profile; closing shrinks it back into the same card. View Transitions API; a plain instant change where it is not supported.

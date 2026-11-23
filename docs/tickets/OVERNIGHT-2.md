@@ -24,10 +24,18 @@ Shared rules: do not touch `match/`, `api/`, `data/`, `components/CrestHero.mjs`
   - Slow-media CLS (images delayed 1.5s) on 5 Nov story: **0 / 0 / 0 / 0** at 375 / 390 / 1440, 0.0002 at 320 (was 0.48 / 0.69 / 0.50 / 0.15 on `main`).
   - innerText and the rendered box of every image, 7 page states × 4 widths: **56 of 56 files identical** before and after.
 
-## T3 — Squad profile transition
-- [ ] In `squad/` only: a tapped card grows into the open profile; closing shrinks it back into the same card. View Transitions API; a plain instant change where it is not supported.
-- [ ] Keep the black cards, cut-outs and data. Reduced motion: instant.
-- Checks: open/close frames at 390 and 1440; focus moves to the profile and back to the card; Escape closes; CLS ≤ 0.02.
+## T3 — Squad profile transition — DONE
+- [x] `squad/squad.js`: opening a profile (tap, Enter or a `#player-id` link from the list) runs `document.startViewTransition`. The tapped card and the profile hero carry the same `view-transition-name` (`sq-player`), one in the old state and one in the new, so the card grows into the hero. Closing (back link, browser Back or Escape) shrinks the hero back into the same card.
+  - The update waits up to 250ms for the profile photo to decode, so the hero does not arrive empty.
+  - Profile to profile (Previous / Next, arrow keys) and the first load stay instant.
+- [x] Without `startViewTransition`, or with `prefers-reduced-motion: reduce`, the change is instant (same code path as before). `squad/squad.css` also turns the view-transition animations off under reduced motion.
+- [x] New: Escape closes an open profile (ignored while the issues menu is open).
+- [x] Black cards, cut-outs, data and wording are unchanged. Timing: open 320ms, close 240ms (exit faster than entrance), house curve `--ease`.
+- Checks (headless Chromium, Ragz card):
+  - Frames list → mid-open → profile → mid-close → list, at 390 and 1440 (mid frames: transition paused at 50%). Animation found: `::view-transition-group(sq-player)` 320ms open, 240ms close, at both widths.
+  - Focus: after opening, `H1 "Ragz"`; after Escape, `#card-ragz` (focus ring visible). Hash cleared, profile hidden.
+  - CLS across open and close: 0 at 390, 0 at 1440. Console errors: 0.
+  - Reduced motion: 0 view-transition animations, profile shown at once.
 
 ## T4 — Page transitions
 - [ ] Cross-document view transitions between the homepage, issue pages, Squad and 404: a short fade, the masthead crest held still. Not in `match/`.

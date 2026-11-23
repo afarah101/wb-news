@@ -53,6 +53,11 @@
 .sq-pn{grid-template-columns:1fr 1fr}
 .sq-pn .prev{display:block;margin-top:0} /* the homepage's .prev list rule also matches this link */
 
+/* ---------- card <-> profile: the tapped card grows into the profile hero (View Transitions, set up in squad.js) ---------- */
+::view-transition-group(sq-player){animation-duration:.32s;animation-timing-function:var(--ease)}
+.sq-closing::view-transition-group(sq-player){animation-duration:.24s} /* closing is quicker than opening */
+::view-transition-old(sq-player),::view-transition-new(sq-player){height:100%;object-fit:cover;overflow:clip}
+
 @media (hover:hover) and (pointer:fine){
   .sq-card:hover .sq-img{transform:scale(1.04)}
   .sq-back:hover{text-decoration:underline}
@@ -76,6 +81,7 @@
   .sq-group{margin-top:var(--s8)} /* section spacing: --s6 on phones, --s8 on desktop */
 }
 @media (prefers-reduced-motion:reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none} /* squad.js also skips the transition */
   .sq-img{transition:none}
   .sq-card:hover .sq-img,.sq-card:active .sq-img{transform:none}
 }

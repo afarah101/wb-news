@@ -1,5 +1,6 @@
 /* Western Ballers FC — issue styles. One source of truth for every issue page.
    Everything above the 'added for the issue archive' line is index.html's original stylesheet, unchanged. */
+  @import url("../css/tokens.css"); /* fonts, type scale, radii and brand colours: must stay the first rule */
   /* News Editorial pairing: Newsreader + Roboto, latin subset only (copied from Google Fonts css2).
      shortcut: pinned to Google's v26/v51 file URLs and latin glyphs only (▮ ▶ ś fall back to system fonts); re-copy both blocks if Google retires them or non-latin text is added. */
   @font-face{font-family:'Newsreader';font-style:normal;font-weight:400 800;font-display:swap;src:url(https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -17,11 +18,11 @@
 
 
   :root{
-    --ink:#121212; --ink-2:#2b2b2b; --muted:#5c5c5c; --rule:#e6e3de; --paper:#fff; --paper-2:#f7f5f2;
-    --wb:#F26B1D; --wb-text:#B4470C;
+    --ink:var(--brand-black); --ink-2:#2b2b2b; --muted:#5c5c5c; --rule:#e6e3de; --paper:#fff; --paper-2:#f7f5f2;
+    --wb:var(--brand-orange); --wb-text:var(--brand-orange-text);
     --on-ink:#fff; --on-ink-2:#c9c9c9; --ink-rule:#3a3a3a; --bezel:#0b0b0b;
-    --serif:"Newsreader", Georgia, "Times New Roman", serif;
-    --sans:"Roboto", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --serif:var(--font-serif);
+    --sans:var(--font-sans);
     --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:40px; --s6:48px; --s7:56px; --s8:64px; --s10:80px;
     --half:4px; /* half-step, chips only */
     --gutter:var(--s2);
@@ -29,14 +30,14 @@
     --ease:cubic-bezier(.16,1,.3,1);
     /* one headline scale for every page; each step grows at 521px and 901px (the rules after the tokens) */
     --t-display:56px; /* cover wordmark */
-    --t-h1:40px;      /* page and article headlines, player names on profiles */
-    --t-h2:28px;      /* section heads, pull quotes, the Match Centre date */
+    --t-h1:var(--fs-head-2); /* page and article headlines, player names on profiles: 40px phones, 48px from 521px */
+    --t-h2:var(--fs-head-3); /* section heads, pull quotes, the Match Centre date: 28px at every width */
     --t-h3:24px;      /* phone-picture headline, lead story row, squad card names */
     --t-h4:18px;      /* story rows, cards, next/previous links, profile facts */
     --read:672px;     /* one width for reading: articles and profile facts */
     /* text sizes below the headline scale: every other font size on the site comes from these */
     --t-lede:20px;    /* standfirst and cover deck; 22px from 521px */
-    --t-read:20px;    /* article body: 20px at line-height 1.6 is one 32px line, so paragraph spacing is --s4 */
+    --t-read:var(--fs-body); /* article body: 17px */
     --t-button:18px;  /* primary button label */
     --t-body:16px;    /* UI text, table text, profile lines */
     --t-small:14px;   /* meta, captions, chyron, hints, footer links */
@@ -45,9 +46,9 @@
     --t-figure:40px;  /* big numerals: score, ratings, the phone mock-up's drop cap */
   }
   /* the pages the fallback faces serve; site chrome outside these (masthead, drawer) keeps the plain stack */
-  .art,.cover,.home,.sq{--serif:"Newsreader","Newsreader Fallback", Georgia, "Times New Roman", serif;--serif-display:"Newsreader","Newsreader Display Fallback", Georgia, "Times New Roman", serif;--sans:"Roboto","Roboto Fallback", -apple-system, "Helvetica Neue", Arial, sans-serif;font-family:var(--sans)}
-  @media (min-width:521px){:root{--t-display:80px;--t-h1:48px;--t-h2:32px;--t-h3:24px;--t-h4:20px;--t-lede:22px}}
-  @media (min-width:901px){:root{--t-display:88px;--t-h1:56px;--t-h2:36px;--t-h3:28px;--t-h4:20px}}
+  .art,.cover,.home,.sq{--serif:var(--font-serif);--serif-display:var(--font-serif);--sans:var(--font-sans);font-family:var(--sans)}
+  @media (min-width:521px){:root{--t-display:80px;--t-h1:var(--fs-head-1);--t-h3:24px;--t-h4:20px;--t-lede:22px}}
+  @media (min-width:901px){:root{--t-display:88px;--t-h3:28px;--t-h4:20px}}
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
   body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
@@ -68,7 +69,7 @@
   .brand small{display:block;margin-top:var(--half);font-size:var(--t-micro);font-weight:700;letter-spacing:.08em;color:var(--wb-text);white-space:nowrap}
   .tags{display:flex;align-items:center;gap:var(--s2);font-size:var(--t-label);font-weight:700;letter-spacing:.12em;color:var(--muted)}
   .tags span:not(.pill){display:none}
-  .pill{background:var(--wb-text);color:var(--on-ink);padding:var(--half) var(--s1);white-space:nowrap;font-stretch:87.5%;letter-spacing:.08em}
+  .pill{background:var(--wb-text);color:var(--on-ink);padding:var(--half) var(--s1);border-radius:var(--radius-tag);white-space:nowrap;font-stretch:87.5%;letter-spacing:.08em}
 
   /* ---------- page 1: cover ---------- */
   .cover{max-width:var(--page);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s5);margin:0 auto;padding:0 var(--gutter) var(--s6)}
@@ -288,7 +289,7 @@
   .score small{font-size:var(--t-micro);color:var(--wb-text)}
   .body figure{margin-top:var(--s4)} /* inside the story every block sits one line (--s4) below the last, like a paragraph */
   .ratings{display:grid;gap:var(--s2);margin-top:var(--s4)}
-  .rating{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:var(--s1) var(--s2);padding:var(--s2);background:var(--paper-2);border-top:4px solid var(--wb)}
+  .rating{border-radius:var(--radius-card);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:var(--s1) var(--s2);padding:var(--s2);background:var(--paper-2);border-top:4px solid var(--wb)}
   .rating b{display:block;font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em}
   .rating i{display:block;margin-top:var(--s1);font-family:var(--serif);font-size:var(--t-body);color:var(--ink-2)}
   .rating .r{font-family:var(--serif);font-weight:700;font-size:var(--t-figure);line-height:1}
@@ -325,7 +326,7 @@
   .home-photo:active{opacity:.85}
   .home h1{font-family:var(--serif-display);font-weight:700;font-size:var(--t-h1);line-height:1.04;letter-spacing:-.025em;margin-top:var(--s1);overflow-wrap:anywhere}
   .home-row{margin-top:var(--s7)}
-  .home-row h2{padding-top:var(--s2);border-top:4px solid var(--ink);font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase}
+  .home-row h2{padding-top:var(--s2);border-top:4px solid var(--ink);font-size:var(--t-label);font-weight:800;letter-spacing:.04em}
   .home .foot,.sq .foot,.mc .foot{width:auto;margin-top:var(--s7);padding:var(--s3) 0 0} /* the squad and Match Centre footers also sit inside the page container: full width, with a gap above the rule */
 
   /* ---------- video: native player; .reel is the homepage Watch row (sideways swipe with snap) ---------- */
@@ -339,7 +340,7 @@
   .prev{display:grid;gap:var(--s2);margin-top:var(--s2)}
   .card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:var(--s2);align-items:start;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .card:active{background:var(--paper-2)}
-  .card img{width:100%;aspect-ratio:1;object-fit:cover}
+  .card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-card)}
   .card small{display:block;font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.1em;line-height:1.4;text-transform:uppercase;color:var(--wb-text)}
   .card b{display:block;margin-top:var(--s1);font-family:var(--serif);font-weight:700;font-size:var(--t-h4);line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
 
@@ -366,3 +367,20 @@
   .foot-links a[aria-current]{color:var(--wb-text)}
   .foot-links a:active{opacity:.6}
   @media (hover:hover) and (pointer:fine){.foot-links a:hover{text-decoration:underline}}
+
+  /* ==================== Athletic-style patterns: live-blog entries, tag pills, score strip ==================== */
+
+  /* ---------- live-blog entries: each section head of an issue gets the crest as its author picture ---------- */
+  .body h2{padding-left:calc(var(--s5) + var(--s1));background:url(wb-crest.svg) no-repeat 0 calc(var(--s3) + var(--half)) / var(--s5) auto}
+  @media (min-width:521px){.body h2{background-position:0 calc(var(--s4) + var(--half))}}
+
+  /* ---------- tag pills: data-tag on a section head whose words already name the topic (Team news, Injury, Transfer, Banter) ---------- */
+  .body h2[data-tag]::after{content:attr(data-tag);display:block;width:fit-content;margin-top:var(--s1);padding:var(--half) var(--s1);border-radius:var(--radius-tag);background:var(--wb-text);color:var(--on-ink);font-family:var(--sans);font-size:var(--t-label);font-weight:700;letter-spacing:.02em;line-height:1.4}
+
+  /* ---------- score strip: weekly results at the top of the homepage (black card) ---------- */
+  .strip{display:flex;align-items:center;gap:var(--s2);margin:var(--s3) 0;padding:var(--s2);border-radius:var(--radius-card);background:var(--ink);color:var(--on-ink);overflow-x:auto;overscroll-behavior-x:contain}
+  .strip h2{flex:none;font-size:var(--t-label);font-weight:800;letter-spacing:.04em;color:var(--wb)}
+  .strip ol{display:flex;gap:var(--s3);list-style:none}
+  .strip li{flex:none;font-size:var(--t-small);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .strip li b{font-weight:800}
+  .strip-empty{font-size:var(--t-small);line-height:1.4;color:var(--on-ink-2)}

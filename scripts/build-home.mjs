@@ -70,6 +70,16 @@ const lines = (a) => a.filter(Boolean).join('\n');
 // the photo slots crop to their own shape: hold the crop on cover.focus so the subject stays in frame
 const focus = (it) => { const [x, y] = it.cover.focus ?? [0.5, 0.5]; return ` style="object-position:${Math.round(x * 100)}% ${Math.round(y * 100)}%"`; };
 
+// ---------- score strip: weekly results. The repo holds no weekly results yet, so the strip shows its empty state.
+// Add rows here only from real results: { date: 'YYYY-MM-DD', home, away, homeScore, awayScore }. Never invent a score.
+const results = [];
+const strip = `  <section class="strip" aria-labelledby="results">
+    <h2 id="results">Results</h2>
+${results.length > 0
+  ? `    <ol>\n${results.map((r) => `      <li><time datetime="${esc(r.date)}">${esc(dayMonth(r))}</time> ${esc(r.home)} <b>${esc(r.homeScore)}–${esc(r.awayScore)}</b> ${esc(r.away)}</li>`).join('\n')}\n    </ol>`
+  : '    <p class="strip-empty">Results start with the new block booking</p>'}
+  </section>`;
+
 // ---------- the page ----------
 const latest = issues[0];
 const videos = issues.filter((it) => it.video);
@@ -102,8 +112,8 @@ ${lines([
   `<meta name="twitter:image" content="${esc(image)}">`,
 ])}
 <title>${esc(name)}</title>
-<link rel="preload" href="https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/sourceserif4/v15/vEFI2_tTDB4M7-auWDN0ahZJW1gb8te1Xb7G.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/librefranklin/v20/jizDREVItHgc8qDIbSTKq4XkRiUf2zcZiVbJ.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/issue.css">
 <link rel="canonical" href="${SITE}/">
 <link rel="icon" href="favicon.ico" sizes="32x32">
@@ -130,6 +140,7 @@ ${crestHeroHead()}
 
 <main class="home">
 ${crestHero(crest)}
+${strip}
   <section class="home-lead">
     <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"${focus(latest)}></a>
     <div class="home-copy">

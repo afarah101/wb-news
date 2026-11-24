@@ -119,6 +119,7 @@ ${lines([
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="assets/issue.css">
+<link rel="stylesheet" href="assets/transitions.css">
 <link rel="canonical" href="${SITE}/">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">

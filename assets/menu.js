@@ -181,3 +181,10 @@
   drawer.addEventListener('click', function (e) { if (dragged) { e.preventDefault(); e.stopPropagation(); } }, true);
   document.addEventListener('touchstart', function () {}, { passive: true }); // iOS Safari applies :active only with a touch listener
 })();
+
+/* Page transitions (assets/transitions.css) run only between pages that opt in. The Match Centre does not, so a page
+   heading there skips its transition up front instead of having the browser abort it (which logs a console error). */
+window.addEventListener('pageswap', function (e) {
+  if (!e.viewTransition || !e.activation || !e.activation.entry) return;
+  if (/\/match(\/|$)/.test(new URL(e.activation.entry.url).pathname)) e.viewTransition.skipTransition();
+});

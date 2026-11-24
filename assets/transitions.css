@@ -1,0 +1,12 @@
+/* Page transitions between the homepage, the issues, the Squad page and 404 (cross-document View Transitions).
+   Only those pages load this file, so the Match Centre never transitions. A short cross-fade; the masthead crest is held still.
+   Reduced motion: no transition. Browsers without cross-document View Transitions: normal page loads. */
+@media (prefers-reduced-motion:no-preference){
+  @view-transition{navigation:auto}
+}
+.brand img{view-transition-name:wb-crest}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.2s}
+/* the crest does not fade or move: the new page's crest is there from the first frame */
+::view-transition-group(wb-crest){animation:none}
+::view-transition-old(wb-crest){display:none}
+::view-transition-new(wb-crest){animation:none}

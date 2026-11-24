@@ -160,9 +160,7 @@
 
   // ---------- routing: #player-id opens a profile, anything else shows the squad ----------
   var lastId = '';
-  function route() {
-    var id = hashId();
-    var p = byId[id];
+  function apply(id, p) {
     if (p) {
       renderProfile(p);
       listView.hidden = true;
@@ -182,9 +180,42 @@
     }
   }
 
-  // arrow keys step through profiles
+  // Opening a profile grows the tapped card into the profile hero; closing shrinks the hero back into the same card.
+  // Both carry the view-transition name "sq-player" (squad.css), one in the old state and one in the new.
+  // Without View Transitions, or with reduced motion, the change is instant.
+  var still = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function route() {
+    var id = hashId();
+    var p = byId[id];
+    var opening = !!p && profileView.hidden;
+    var closing = !p && !profileView.hidden;
+    var card = document.getElementById('card-' + (opening ? id : lastId));
+    if (!document.startViewTransition || still.matches || !(opening || closing) || !card) return apply(id, p);
+    var from = opening ? card : profileView.querySelector('.sq-hero');
+    var html = document.documentElement;
+    html.classList.toggle('sq-closing', closing);
+    if (from) from.style.viewTransitionName = 'sq-player';
+    var t = document.startViewTransition(function () {
+      if (from) from.style.viewTransitionName = '';
+      apply(id, p);
+      var to = opening ? profileView.querySelector('.sq-hero') : card;
+      if (to) to.style.viewTransitionName = 'sq-player';
+      // give the profile photo a moment to decode so the hero does not arrive empty
+      var img = opening && profileView.querySelector('.sq-hero-img');
+      return img && img.decode ? Promise.race([img.decode().catch(function () {}), new Promise(function (r) { setTimeout(r, 250); })]) : undefined;
+    });
+    t.finished.finally(function () {
+      card.style.viewTransitionName = '';
+      var hero = profileView.querySelector('.sq-hero');
+      if (hero) hero.style.viewTransitionName = '';
+      html.classList.remove('sq-closing');
+    });
+  }
+
+  // arrow keys step through profiles; Escape closes the profile
   document.addEventListener('keydown', function (e) {
     if (profileView.hidden || e.altKey || e.metaKey || e.ctrlKey || document.documentElement.classList.contains('open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); location.hash = ''; return; }
     var link = e.key === 'ArrowLeft' ? profileView.querySelector('.sq-pn .prev') : e.key === 'ArrowRight' ? profileView.querySelector('.sq-pn .next') : 0;
     if (link) { e.preventDefault(); location.hash = link.getAttribute('href'); }
   });

@@ -30,6 +30,9 @@ issues.forEach((it, i) => {
     check(file(it.video.src) && file(it.video.poster), at + 'video.src and video.poster must point at files in this repo');
     check(Number.isFinite(it.video.duration) && it.video.duration > 0, at + 'video.duration must be the length in seconds');
   }
+  if (it.result !== undefined) { // optional Southall v Grove score for the homepage strip: { "southall": n, "grove": n }
+    check([it.result?.southall, it.result?.grove].every((n) => Number.isInteger(n) && n >= 0), at + 'result must be { "southall": n, "grove": n } with whole numbers');
+  }
   check(i === 0 || it.date < issues[i - 1].date, at + 'issues must be listed newest first'); // the menu reads the same order
 });
 
@@ -70,6 +73,17 @@ const lines = (a) => a.filter(Boolean).join('\n');
 // the photo slots crop to their own shape: hold the crop on cover.focus so the subject stays in frame
 const focus = (it) => { const [x, y] = it.cover.focus ?? [0.5, 0.5]; return ` style="object-position:${Math.round(x * 100)}% ${Math.round(y * 100)}%"`; };
 
+// ---------- score strip: only results recorded in issues.json; never invented ----------
+const results = issues.filter((it) => it.result);
+const strip = `  <section class="strip" aria-labelledby="results">
+    <h2 id="results">Southall v Grove</h2>
+${results.length > 0
+  ? `    <ol class="strip-row">
+${results.map((it) => `      <li><time datetime="${esc(it.date)}">${esc(dayMonth(it))}</time><span>Southall <b>${it.result.southall}</b></span><span>Grove <b>${it.result.grove}</b></span></li>`).join('\n')}
+    </ol>`
+  : '    <p class="strip-empty">Results start with the new block booking</p>'}
+  </section>`;
+
 // ---------- the page ----------
 const latest = issues[0];
 const videos = issues.filter((it) => it.video);
@@ -102,8 +116,8 @@ ${lines([
   `<meta name="twitter:image" content="${esc(image)}">`,
 ])}
 <title>${esc(name)}</title>
-<link rel="preload" href="https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="assets/issue.css">
 <link rel="canonical" href="${SITE}/">
 <link rel="icon" href="favicon.ico" sizes="32x32">
@@ -129,6 +143,7 @@ ${crestHeroHead()}
 </header>
 
 <main class="home">
+${strip}
 ${crestHero(crest)}
   <section class="home-lead">
     <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"${focus(latest)}></a>

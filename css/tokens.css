@@ -1,0 +1,23 @@
+/* Western Ballers FC: brand tokens. Imported first by assets/issue.css. */
+@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400..800&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap");
+
+:root{
+  /* brand colours (unchanged values from assets/issue.css) */
+  --brand-orange:#F26B1D;      /* bars, rules, fills behind dark text */
+  --brand-orange-text:#B4470C; /* orange text and fills behind white text */
+  --brand-black:#121212;       /* black cards, chyron, audio block */
+
+  /* fonts */
+  --font-headline:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body:"Libre Franklin", -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  /* type scale */
+  --type-h1:48px;
+  --type-h2:40px;
+  --type-h3:28px;
+  --type-body:17px;
+
+  /* radii */
+  --radius-tag:4px;
+  --radius-card:8px;
+}

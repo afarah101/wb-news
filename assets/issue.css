@@ -1,27 +1,14 @@
+@import url("../css/tokens.css"); /* brand tokens and the two Google fonts: Source Serif 4 (headlines), Libre Franklin (body) */
 /* Western Ballers FC — issue styles. One source of truth for every issue page.
    Everything above the 'added for the issue archive' line is index.html's original stylesheet, unchanged. */
-  /* News Editorial pairing: Newsreader + Roboto, latin subset only (copied from Google Fonts css2).
-     shortcut: pinned to Google's v26/v51 file URLs and latin glyphs only (▮ ▶ ś fall back to system fonts); re-copy both blocks if Google retires them or non-latin text is added. */
-  @font-face{font-family:'Newsreader';font-style:normal;font-weight:400 800;font-display:swap;src:url(https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjIJFJpc.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-  @font-face{font-family:'Roboto';font-style:normal;font-weight:400 800;font-stretch:87.5% 100%;font-display:swap;src:url(https://fonts.gstatic.com/s/roboto/v51/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-  /* metric-matched fallbacks: Times New Roman (Liberation Serif on Linux) and Arial (Liberation Sans) resized per weight to Newsreader and Roboto widths,
-     so text wraps the same before and after the web font arrives (no layout shift on a slow connection). Newsreader has an optical-size axis, so its
-     width changes with size: the serif values were fitted by measuring line counts on every page at 320, 375, 390 and 1440px.
-     Used inside the page containers only (rule after the tokens). */
-  @font-face{font-family:'Newsreader Fallback';src:local('Times New Roman'),local('TimesNewRomanPSMT'),local('Liberation Serif');font-weight:100 500;size-adjust:100%;ascent-override:74%;descent-override:27%;line-gap-override:0%}
-  @font-face{font-family:'Newsreader Fallback';src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold');font-weight:501 650;size-adjust:98%;ascent-override:75.5%;descent-override:27.6%;line-gap-override:0%}
-  @font-face{font-family:'Newsreader Fallback';src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold');font-weight:651 900;size-adjust:101%;ascent-override:73.3%;descent-override:26.7%;line-gap-override:0%}
-  @font-face{font-family:'Newsreader Display Fallback';src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),local('Liberation Serif Bold');font-weight:100 900;size-adjust:106%;ascent-override:69.8%;descent-override:25.5%;line-gap-override:0%} /* page headlines (40px and up): the optical-size axis makes Newsreader wider at display sizes */
-  @font-face{font-family:'Roboto Fallback';src:local('Arial'),local('ArialMT'),local('Liberation Sans');font-weight:100 500;size-adjust:99.3%;ascent-override:93.2%;descent-override:24.5%;line-gap-override:0%}
-  @font-face{font-family:'Roboto Fallback';src:local('Arial Bold'),local('Arial-BoldMT'),local('Liberation Sans Bold');font-weight:501 900;size-adjust:94%;ascent-override:98.6%;descent-override:26%;line-gap-override:0%}
 
 
   :root{
-    --ink:#121212; --ink-2:#2b2b2b; --muted:#5c5c5c; --rule:#e6e3de; --paper:#fff; --paper-2:#f7f5f2;
-    --wb:#F26B1D; --wb-text:#B4470C;
+    --ink:var(--brand-black); --ink-2:#2b2b2b; --muted:#5c5c5c; --rule:#e6e3de; --paper:#fff; --paper-2:#f7f5f2;
+    --wb:var(--brand-orange); --wb-text:var(--brand-orange-text);
     --on-ink:#fff; --on-ink-2:#c9c9c9; --ink-rule:#3a3a3a; --bezel:#0b0b0b;
-    --serif:"Newsreader", Georgia, "Times New Roman", serif;
-    --sans:"Roboto", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --serif:var(--font-headline); --serif-display:var(--font-headline);
+    --sans:var(--font-body);
     --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:40px; --s6:48px; --s7:56px; --s8:64px; --s10:80px;
     --half:4px; /* half-step, chips only */
     --gutter:var(--s2);
@@ -29,14 +16,14 @@
     --ease:cubic-bezier(.16,1,.3,1);
     /* one headline scale for every page; each step grows at 521px and 901px (the rules after the tokens) */
     --t-display:56px; /* cover wordmark */
-    --t-h1:40px;      /* page and article headlines, player names on profiles */
-    --t-h2:28px;      /* section heads, pull quotes, the Match Centre date */
+    --t-h1:var(--type-h2); /* page and article headlines, player names on profiles */
+    --t-h2:var(--type-h3); /* section heads, pull quotes, the Match Centre date */
     --t-h3:24px;      /* phone-picture headline, lead story row, squad card names */
     --t-h4:18px;      /* story rows, cards, next/previous links, profile facts */
     --read:672px;     /* one width for reading: articles and profile facts */
     /* text sizes below the headline scale: every other font size on the site comes from these */
     --t-lede:20px;    /* standfirst and cover deck; 22px from 521px */
-    --t-read:20px;    /* article body: 20px at line-height 1.6 is one 32px line, so paragraph spacing is --s4 */
+    --t-read:var(--type-body); /* article body */
     --t-button:18px;  /* primary button label */
     --t-body:16px;    /* UI text, table text, profile lines */
     --t-small:14px;   /* meta, captions, chyron, hints, footer links */
@@ -45,9 +32,9 @@
     --t-figure:40px;  /* big numerals: score, ratings, the phone mock-up's drop cap */
   }
   /* the pages the fallback faces serve; site chrome outside these (masthead, drawer) keeps the plain stack */
-  .art,.cover,.home,.sq{--serif:"Newsreader","Newsreader Fallback", Georgia, "Times New Roman", serif;--serif-display:"Newsreader","Newsreader Display Fallback", Georgia, "Times New Roman", serif;--sans:"Roboto","Roboto Fallback", -apple-system, "Helvetica Neue", Arial, sans-serif;font-family:var(--sans)}
-  @media (min-width:521px){:root{--t-display:80px;--t-h1:48px;--t-h2:32px;--t-h3:24px;--t-h4:20px;--t-lede:22px}}
-  @media (min-width:901px){:root{--t-display:88px;--t-h1:56px;--t-h2:36px;--t-h3:28px;--t-h4:20px}}
+  .art,.cover,.home,.sq{font-family:var(--sans)}
+  @media (min-width:521px){:root{--t-display:80px;--t-h1:var(--type-h1);--t-h2:var(--type-h3);--t-h3:24px;--t-h4:20px;--t-lede:22px}}
+  @media (min-width:901px){:root{--t-display:88px;--t-h1:var(--type-h1);--t-h2:var(--type-h3);--t-h3:28px;--t-h4:20px}}
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
   body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
@@ -68,7 +55,7 @@
   .brand small{display:block;margin-top:var(--half);font-size:var(--t-micro);font-weight:700;letter-spacing:.08em;color:var(--wb-text);white-space:nowrap}
   .tags{display:flex;align-items:center;gap:var(--s2);font-size:var(--t-label);font-weight:700;letter-spacing:.12em;color:var(--muted)}
   .tags span:not(.pill){display:none}
-  .pill{background:var(--wb-text);color:var(--on-ink);padding:var(--half) var(--s1);white-space:nowrap;font-stretch:87.5%;letter-spacing:.08em}
+  .pill{border-radius:var(--radius-tag);background:var(--wb-text);color:var(--on-ink);padding:var(--half) var(--s1);white-space:nowrap;font-stretch:87.5%;letter-spacing:.08em}
 
   /* ---------- page 1: cover ---------- */
   .cover{max-width:var(--page);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s5);margin:0 auto;padding:0 var(--gutter) var(--s6)}
@@ -80,7 +67,7 @@
   .ph-head{display:flex;align-items:center;gap:var(--s1);padding:var(--s1) var(--s2);border-bottom:2px solid var(--ink)}
   .ph-head img{width:24px}
   .ph-head b{font-family:var(--serif);font-weight:700;font-size:var(--t-small);letter-spacing:-.01em;flex:1}
-  .ph-pill{background:var(--wb-text);color:var(--on-ink);font-size:var(--t-micro);font-weight:700;font-stretch:87.5%;letter-spacing:.06em;padding:var(--half) var(--s1)}
+  .ph-pill{border-radius:var(--radius-tag);background:var(--wb-text);color:var(--on-ink);font-size:var(--t-micro);font-weight:700;font-stretch:87.5%;letter-spacing:.06em;padding:var(--half) var(--s1)}
   .ph-body{padding:var(--s2)}
   .ph-k{font-size:var(--t-micro);font-weight:700;font-stretch:87.5%;letter-spacing:.08em;color:var(--wb-text)}
   .ph-h{font-family:var(--serif);font-weight:700;font-size:var(--t-h3);line-height:1.05;letter-spacing:-.02em;margin-top:var(--s1)}
@@ -149,10 +136,10 @@
   /* story break: gap between stories is several times the gap inside one */
   .body h2{position:relative;font-family:var(--serif);font-weight:700;font-size:var(--t-h2);line-height:1.15;letter-spacing:-.02em;margin-top:var(--s8);padding-top:var(--s3);border-top:1px solid var(--ink)}
   .body h2::before{content:"";position:absolute;left:0;top:-3px;width:var(--s8);height:5px;background:var(--wb)}
-  .sub{display:block;font-family:var(--sans);font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em;line-height:1.4;color:var(--wb-text);margin-top:var(--s1);text-transform:uppercase}
+  .sub{display:block;font-family:var(--sans);font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em;line-height:1.4;color:var(--wb-text);margin-top:var(--s1)}
 
   /* audio: only the wrapper is styled, the native player sits inside untouched */
-  .listen{margin:var(--s4) calc(var(--gutter) * -1) 0;padding:var(--s3) var(--gutter);background:var(--ink);color:var(--on-ink);border-top:4px solid var(--wb);color-scheme:dark}
+  .listen{border-radius:var(--radius-card);overflow:hidden;margin:var(--s4) calc(var(--gutter) * -1) 0;padding:var(--s3) var(--gutter);background:var(--ink);color:var(--on-ink);border-top:4px solid var(--wb);color-scheme:dark}
   .listen-k{display:inline-block;padding:var(--half) var(--s1);background:var(--wb);color:var(--ink);font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.1em}
   .listen-t{font-family:var(--serif);font-weight:600;font-size:var(--t-h3);line-height:1.3;letter-spacing:-.01em;margin:var(--s2) 0}
   .listen audio{display:block;width:100%;height:54px;margin-top:var(--s2)}
@@ -266,7 +253,7 @@
   /* ---------- previous / next issue ---------- */
   .issue-nav{display:grid;gap:var(--s2);margin-top:var(--s6);padding-top:var(--s3);border-top:4px solid var(--ink)}
   .issue-nav:empty{display:none}
-  .issue-nav a{display:block;min-height:44px;padding:var(--s2);border:1px solid var(--rule);text-decoration:none;-webkit-tap-highlight-color:transparent}
+  .issue-nav a{border-radius:var(--radius-card);display:block;min-height:44px;padding:var(--s2);border:1px solid var(--rule);text-decoration:none;-webkit-tap-highlight-color:transparent}
   .issue-nav a:active{background:var(--paper-2)}
   .issue-nav small{display:block;font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase;color:var(--wb-text)}
   .issue-nav span{display:block;margin-top:var(--s1);font-family:var(--serif);font-weight:700;font-size:var(--t-h4);line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
@@ -288,7 +275,7 @@
   .score small{font-size:var(--t-micro);color:var(--wb-text)}
   .body figure{margin-top:var(--s4)} /* inside the story every block sits one line (--s4) below the last, like a paragraph */
   .ratings{display:grid;gap:var(--s2);margin-top:var(--s4)}
-  .rating{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:var(--s1) var(--s2);padding:var(--s2);background:var(--paper-2);border-top:4px solid var(--wb)}
+  .rating{border-radius:var(--radius-card);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:var(--s1) var(--s2);padding:var(--s2);background:var(--paper-2);border-top:4px solid var(--wb)}
   .rating b{display:block;font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em}
   .rating i{display:block;margin-top:var(--s1);font-family:var(--serif);font-size:var(--t-body);color:var(--ink-2)}
   .rating .r{font-family:var(--serif);font-weight:700;font-size:var(--t-figure);line-height:1}
@@ -299,7 +286,7 @@
   .lineups th{padding:var(--s1) 0;border-bottom:2px solid var(--ink);text-align:left;font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em}
   .lineups td{padding:var(--s1) var(--s1) var(--s1) 0;border-bottom:1px solid var(--rule);vertical-align:baseline;overflow-wrap:anywhere}
   .lineups .no{width:var(--s4);font-weight:800;font-variant-numeric:tabular-nums;color:var(--wb-text)}
-  .debut{display:inline-block;margin-left:var(--half);padding:0 var(--half);background:var(--wb-text);color:var(--on-ink);font-size:var(--t-micro);font-weight:800;font-stretch:87.5%;letter-spacing:.1em;vertical-align:1px}
+  .debut{display:inline-block;border-radius:var(--radius-tag);margin-left:var(--half);padding:0 var(--half);background:var(--wb-text);color:var(--on-ink);font-size:var(--t-micro);font-weight:800;font-stretch:87.5%;letter-spacing:.1em;vertical-align:1px}
 
   @media (hover:hover) and (pointer:fine){
     .icon-btn:hover,.issue:hover,.issue-nav a:hover{background:var(--paper-2)}
@@ -325,7 +312,7 @@
   .home-photo:active{opacity:.85}
   .home h1{font-family:var(--serif-display);font-weight:700;font-size:var(--t-h1);line-height:1.04;letter-spacing:-.025em;margin-top:var(--s1);overflow-wrap:anywhere}
   .home-row{margin-top:var(--s7)}
-  .home-row h2{padding-top:var(--s2);border-top:4px solid var(--ink);font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em;text-transform:uppercase}
+  .home-row h2{padding-top:var(--s2);border-top:4px solid var(--ink);font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.12em}
   .home .foot,.sq .foot,.mc .foot{width:auto;margin-top:var(--s7);padding:var(--s3) 0 0} /* the squad and Match Centre footers also sit inside the page container: full width, with a gap above the rule */
 
   /* ---------- video: native player; .reel is the homepage Watch row (sideways swipe with snap) ---------- */
@@ -339,7 +326,7 @@
   .prev{display:grid;gap:var(--s2);margin-top:var(--s2)}
   .card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:var(--s2);align-items:start;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .card:active{background:var(--paper-2)}
-  .card img{width:100%;aspect-ratio:1;object-fit:cover}
+  .card img{border-radius:var(--radius-card);width:100%;aspect-ratio:1;object-fit:cover}
   .card small{display:block;font-size:var(--t-label);font-weight:800;font-stretch:87.5%;letter-spacing:.1em;line-height:1.4;text-transform:uppercase;color:var(--wb-text)}
   .card b{display:block;margin-top:var(--s1);font-family:var(--serif);font-weight:700;font-size:var(--t-h4);line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
 
@@ -366,3 +353,23 @@
   .foot-links a[aria-current]{color:var(--wb-text)}
   .foot-links a:active{opacity:.6}
   @media (hover:hover) and (pointer:fine){.foot-links a:hover{text-decoration:underline}}
+
+
+  /* ==================== Athletic-style patterns: live-blog entries, tag pills, score strip ==================== */
+
+  /* ---------- live-blog entries: each story heading is an entry, the crest is its author picture ---------- */
+  .body h2{padding-left:var(--s7);background:url(wb-crest.svg) no-repeat 0 var(--s3)/40px 49px;min-height:calc(49px + var(--s3))}
+  .body h2[data-tag]::after{content:attr(data-tag);display:table;margin-top:var(--s1);padding:var(--half) var(--s1);border-radius:var(--radius-tag);background:var(--wb-text);color:var(--on-ink);font-family:var(--sans);font-size:var(--t-label);font-weight:700;line-height:1.4;letter-spacing:.02em}
+  @media (min-width:521px){.body h2{background-position:0 var(--s4);min-height:calc(49px + var(--s4))}}
+
+  /* ---------- score strip: weekly Southall v Grove results at the top of the homepage ---------- */
+  .strip{margin:0 calc(var(--gutter) * -1);padding:var(--s2) var(--gutter);background:var(--ink);color:var(--on-ink)}
+  .strip h2{font-family:var(--sans);font-size:var(--t-label);font-weight:700;line-height:1.4;letter-spacing:.04em;color:var(--on-ink-2)}
+  .strip-row{display:flex;gap:var(--s1);margin-top:var(--s1);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;list-style:none}
+  .strip-row li{flex:none;display:grid;gap:var(--half);min-width:120px;padding:var(--s1) var(--s2);border:1px solid var(--ink-rule);border-radius:var(--radius-card);scroll-snap-align:start;font-size:var(--t-small);font-variant-numeric:tabular-nums}
+  .strip-row time{font-size:var(--t-label);color:var(--on-ink-2)}
+  .strip-row span{display:flex;justify-content:space-between;gap:var(--s2)}
+  .strip-row b{font-weight:800}
+  .strip-empty{margin-top:var(--s1);font-family:var(--serif);font-size:var(--t-body);line-height:1.4;color:var(--on-ink)}
+  @media (min-width:901px){.strip{margin:0;border-radius:var(--radius-card)}}
+  @media (prefers-reduced-motion:reduce){.strip-row{scroll-snap-type:none;scroll-behavior:auto}}

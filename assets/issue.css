@@ -433,3 +433,6 @@
     .body h2:has(.sub){padding-top:calc(var(--s3) + 42px + var(--s2))}
     .body h2 .sub{white-space:normal}
   }
+  /* header: club name and tags on the first row, the section links on their own row */
+  .hdr-nav{flex:1 1 100%;order:3}
+  @media (min-width:601px){.hdr-nav{padding-left:52px}}

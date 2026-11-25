@@ -73,16 +73,12 @@ const lines = (a) => a.filter(Boolean).join('\n');
 // the photo slots crop to their own shape: hold the crop on cover.focus so the subject stays in frame
 const focus = (it) => { const [x, y] = it.cover.focus ?? [0.5, 0.5]; return ` style="object-position:${Math.round(x * 100)}% ${Math.round(y * 100)}%"`; };
 
-// ---------- score strip: only results recorded in issues.json; never invented ----------
+// ---------- score ribbon: only results recorded in issues.json; never invented ----------
 const results = issues.filter((it) => it.result);
-const strip = `  <section class="strip" aria-labelledby="results">
-    <h2 id="results">Southall v Grove</h2>
-${results.length > 0
-  ? `    <ol class="strip-row">
-${results.map((it) => `      <li><time datetime="${esc(it.date)}">${esc(dayMonth(it))}</time><span>Southall <b>${it.result.southall}</b></span><span>Grove <b>${it.result.grove}</b></span></li>`).join('\n')}
-    </ol>`
-  : '    <p class="strip-empty">Results start with the new block booking</p>'}
-  </section>`;
+const ribbon = `<aside class="ribbon" aria-label="Southall v Grove results"><div class="ribbon-in"><b>Southall v Grove</b>${results.length > 0
+  ? `<ol>${results.map((it) => `<li><time datetime="${esc(it.date)}">${esc(dayMonth(it))}</time> Southall ${it.result.southall}–${it.result.grove} Grove</li>`).join('')}</ol>`
+  : '<p>Results start with the new block booking</p>'}</div></aside>`;
+const subnav = `<nav class="subnav" aria-label="Sections"><div class="subnav-in"><a href="./" aria-current="page">Latest issue</a><a href="squad/">Squad</a><a href="#previous">Archive</a></div></nav>`;
 
 // ---------- the page ----------
 const latest = issues[0];
@@ -127,6 +123,7 @@ ${lines([
 ${crestHeroHead()}
 </head>
 <body>
+${ribbon}
 
 <header class="top">
   <div class="top-in">
@@ -142,9 +139,9 @@ ${crestHeroHead()}
     <div class="tags"><span class="pill">${esc(latest.type.toUpperCase())}</span><span>THURSDAY SESSION</span><span>${esc(dayMonth(latest).toUpperCase())}</span></div>
   </div>
 </header>
+${subnav}
 
 <main class="home">
-${strip}
 ${crestHero(crest)}
   <section class="home-lead">
     <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"${focus(latest)}></a>
@@ -152,7 +149,7 @@ ${crestHero(crest)}
       <div class="kick">${esc(latest.type.toUpperCase())} · THURSDAY NIGHT FOOTBALL</div>
       <h1>${esc(latest.title)}</h1>
 ${lines([
-  latest.standfirst && `      <p class="standfirst">${esc(latest.standfirst)}</p>`,
+  latest.standfirst && `      <p class="standfirst clamp">${esc(latest.standfirst)}</p>\n      <a class="more" href="${story(latest)}">Read more</a>`,
   `      <div class="meta"><b>Western Ballers Media</b><time datetime="${esc(latest.date)}">${esc(longDate(latest))}</time></div>`,
   '      <ol class="heads">',
   ...latest.stories.map((s, i) => `        <li><span>${String(i + 1).padStart(2, '0')}</span>${esc(s)}</li>`),

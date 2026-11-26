@@ -190,6 +190,7 @@ ${previous.map((it) => `      <a class="card" href="${story(it)}">
 </main>
 
 <script src="assets/menu.js"></script>
+<script src="assets/parallax.js"></script>
 </body>
 </html>
 `;

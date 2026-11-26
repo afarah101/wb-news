@@ -436,3 +436,19 @@
   /* header: club name and tags on the first row, the section links on their own row */
   .hdr-nav{flex:1 1 100%;order:3}
   @media (min-width:601px){.hdr-nav{padding-left:52px}}
+
+  /* ==================== parallax: the large photos (assets/parallax.js adds .plx) ==================== */
+  /* the photo trails the page by --plx-k (12%, 6% on phones) inside a frame that hides the overflow; transform only */
+  :root{--plx-k:.12}
+  @media (max-width:600px){:root{--plx-k:.06}}
+  .plx{display:block;overflow:hidden}
+  .plx>img{transform:translateY(var(--plx-y,0px)) scale(var(--plx-s,1));will-change:transform}
+  @supports (animation-timeline:view()){
+    .plx{view-timeline:--plx block}
+    .plx>img{animation:plx linear both;animation-timeline:--plx;animation-range:cover 0% cover 100%}
+  }
+  @keyframes plx{
+    from{transform:translateY(calc(var(--plx-k) * -.5 * (100vh + 100%))) scale(var(--plx-s,1))}
+    to{transform:translateY(calc(var(--plx-k) * .5 * (100vh + 100%))) scale(var(--plx-s,1))}
+  }
+  @media (prefers-reduced-motion:reduce){.plx>img{animation:none;transform:none;will-change:auto}}

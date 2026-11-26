@@ -124,7 +124,6 @@ ${lines([
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
-${crestHeroHead()}
 </head>
 <body>
 
@@ -135,7 +134,7 @@ ${crestHeroHead()}
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <a class="brand" href="./">
-        <img src="assets/wb-crest.svg" width="40" height="49" alt="Western Ballers FC crest">
+        <img src="assets/wb-crest.svg" width="32" height="39" alt="Western Ballers FC crest">
         <span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span>
       </a>
     </div>
@@ -144,16 +143,15 @@ ${crestHeroHead()}
 </header>
 
 <main class="home">
-${strip}
-${crestHero(crest)}
+${results.length > 0 ? strip : ''}
   <section class="home-lead">
-    <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="" fetchpriority="high"${focus(latest)}></a>
+    <a class="home-photo" href="${story(latest)}" tabindex="-1" aria-hidden="true"><img src="${esc(latest.cover.src)}" alt="${esc(latest.displayTitle)}" fetchpriority="high"${focus(latest)}></a>
     <div class="home-copy">
       <div class="kick">${esc(latest.type.toUpperCase())} · THURSDAY NIGHT FOOTBALL</div>
       <h1>${esc(latest.title)}</h1>
 ${lines([
   latest.standfirst && `      <p class="standfirst">${esc(latest.standfirst)}</p>`,
-  `      <div class="meta"><b>Western Ballers Media</b><time datetime="${esc(latest.date)}">${esc(longDate(latest))}</time></div>`,
+  `      <div class="meta"><time datetime="${esc(latest.date)}">${esc(longDate(latest))}</time></div>`,
   '      <ol class="heads">',
   ...latest.stories.map((s, i) => `        <li><span>${String(i + 1).padStart(2, '0')}</span>${esc(s)}</li>`),
   '      </ol>',
@@ -179,7 +177,7 @@ ${videos.map((it) => `      <figure class="clip">
     <h2 id="previous">Previous issues</h2>
     <div class="prev">
 ${previous.map((it) => `      <a class="card" href="${story(it)}">
-        <img src="${esc(it.cover.src)}" alt="" loading="lazy"${focus(it)}>
+        <img src="${esc(it.cover.src)}" alt="${esc(it.displayTitle)}" loading="lazy"${focus(it)}>
         <span><small>${esc(it.type)} · <time datetime="${esc(it.date)}">${esc(shortDate(it))}</time></small><b>${esc(it.displayTitle)}</b></span>
       </a>`).join('\n')}
     </div>
@@ -187,12 +185,11 @@ ${previous.map((it) => `      <a class="card" href="${story(it)}">
 ])}
 
   <footer class="foot">
-    <div class="foot-brand"><img src="assets/wb-crest.svg" width="32" height="39" alt=""><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
+    <div class="foot-brand"><img src="assets/wb-crest.svg" width="32" height="39" alt="Western Ballers FC crest"><span><b>Western Ballers FC</b><small>THURSDAY NIGHT FOOTBALL</small></span></div>
   </footer>
 </main>
 
 <script src="assets/menu.js"></script>
-${crestHeroScript()}
 </body>
 </html>
 `;

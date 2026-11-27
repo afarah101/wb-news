@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-11-26",
+    "type": "Full-time",
+    "title": "Southall Win 5–1 as Debutants Shine, Westway Finds a Hiding Place and Hanad's Ball Is Still Missing",
+    "displayTitle": "Southall win 5–1 as debutants shine, Westway finds a hiding place and Hanad's ball is still missing",
+    "slug": "2026-11-26",
+    "standfirst": "A one-sided night at Phoenix. Three new signings walked in. Southall walked away with the points. Grove walked home in silence.",
+    "stories": [
+      "Southall whitewash Grove 5–1",
+      "Search party sent for Hanad Grove's shooting",
+      "Westway's miracle injury",
+      "Ahmed PB and Skinz: the clean-up crew",
+      "Three debuts, one man of the match",
+      "Grove look for answers"
+    ],
+    "cover": {
+      "src": "assets/img/2026-11-26/southall-celebrate.webp",
+      "focus": [
+        0.45,
+        0.4
+      ]
+    },
+    "result": {
+      "southall": 5,
+      "grove": 1
+    }
+  },
+  {
     "date": "2026-11-12",
     "type": "Pre-match",
     "title": "Luqman v Sudz: bromance or breaking point?",
@@ -15,7 +42,10 @@
     ],
     "cover": {
       "src": "issues/2026-11-12/soods-hanad.jpg",
-      "focus": [0.5, 0.25]
+      "focus": [
+        0.5,
+        0.25
+      ]
     }
   },
   {
@@ -35,7 +65,10 @@
     ],
     "cover": {
       "src": "nappy.jpg",
-      "focus": [0.5, 0.48]
+      "focus": [
+        0.5,
+        0.48
+      ]
     }
   },
   {
@@ -54,7 +87,10 @@
     ],
     "cover": {
       "src": "assets/img/2026-10-29/exhibit-b.webp",
-      "focus": [0.5, 0.4]
+      "focus": [
+        0.5,
+        0.4
+      ]
     }
   },
   {
@@ -97,7 +133,10 @@
     ],
     "cover": {
       "src": "assets/img/2026-10-15/odemwingie.webp",
-      "focus": [0.5, 0.45]
+      "focus": [
+        0.5,
+        0.45
+      ]
     },
     "video": {
       "src": "assets/video/2026-10-15.mp4",

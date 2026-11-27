@@ -42,6 +42,7 @@ const OG = { w: 1200, h: 630, max: 300 * 1024 };
 const og = (it) => `assets/og/${it.date}.jpg`;
 const clamp = (n, max) => Math.min(Math.max(Math.round(n), 0), max);
 mkdirSync(join(root, 'assets/og'), { recursive: true });
+const ogCrest = await sharp(join(root, 'crest.png')).resize({ height: 120 }).png().toBuffer();
 for (const it of issues) {
   const src = join(root, it.cover.src), out = join(root, og(it));
   const [fx, fy] = it.cover.focus ?? [0.5, 0.5];
@@ -50,6 +51,7 @@ for (const it of issues) {
   const k = Math.max(OG.w / width, OG.h / height), w = Math.ceil(width * k), h = Math.ceil(height * k);
   await sharp(src).autoOrient().resize(w, h)
     .extract({ left: clamp(w * fx - OG.w / 2, w - OG.w), top: clamp(h * fy - OG.h / 2, h - OG.h), width: OG.w, height: OG.h })
+    .composite([{ input: ogCrest, left: 32, top: 28 }]) // the club crest, top-left, so every link preview carries the logo
     .jpeg({ quality: 82 }).toFile(out);
   check(statSync(out).size <= OG.max, `${og(it)} is over 300 KB`);
 }
@@ -196,4 +198,34 @@ ${previous.map((it) => `      <a class="card" href="${story(it)}">
 `;
 
 writeFileSync(join(root, 'index.html'), html);
+// ---------- issue pages: link-preview (WhatsApp) tags, rewritten from issues.json on every build ----------
+// Every issue page shares as: its own photo with the crest (assets/og/<slug>.jpg), its headline and its standfirst.
+// The script replaces any og:/twitter: tags in the page's <head>, so new issues need nothing by hand.
+for (const it of issues) {
+  const page = join(root, `issues/${it.slug}/index.html`);
+  const html = readFileSync(page, 'utf8');
+  const desc = it.standfirst || it.displayTitle;
+  const tags = [
+    '<meta property="og:site_name" content="Western Ballers FC">',
+    '<meta property="og:type" content="article">',
+    `<meta property="og:url" content="${SITE}/issues/${esc(it.slug)}/">`,
+    `<meta property="og:title" content="${esc(it.displayTitle)}">`,
+    `<meta property="og:description" content="${esc(desc)}">`,
+    `<meta property="og:image" content="${SITE}/${og(it)}">`,
+    `<meta property="og:image:width" content="${OG.w}">`,
+    `<meta property="og:image:height" content="${OG.h}">`,
+    `<meta property="og:image:alt" content="${esc(it.displayTitle)}">`,
+    '<meta name="twitter:card" content="summary_large_image">',
+    `<meta name="twitter:title" content="${esc(it.displayTitle)}">`,
+    `<meta name="twitter:description" content="${esc(desc)}">`,
+    `<meta name="twitter:image" content="${SITE}/${og(it)}">`,
+  ].join('\n');
+  const [head, rest] = html.split('</head>');
+  check(rest !== undefined, `issues/${it.slug}/index.html has no </head>`);
+  const clean = head.replace(/^<meta (property="og:|name="twitter:)[^>]*>\n/gm, '');
+  const out = clean.replace(/(<meta name="description"[^>]*>\n)/, `$1${tags}\n`);
+  check(out !== clean, `issues/${it.slug}/index.html needs a <meta name="description"> tag`);
+  if (out + '</head>' + rest !== html) writeFileSync(page, out + '</head>' + rest);
+}
+
 console.log(`build-home: index.html now leads with ${latest.slug} "${latest.title}" (${videos.length} videos, ${previous.length} previous issues)`);
